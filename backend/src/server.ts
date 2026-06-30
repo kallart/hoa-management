@@ -171,8 +171,9 @@ app.put('/api/properties/:id', async (req, res) => {
         landArea: updatedLandArea,
         ratePerYear: updatedLandArea * 42 * 12,
         owner: {
-          update: {
-            name: ownerName
+          upsert: {
+            create: { name: ownerName },
+            update: { name: ownerName }
           }
         }
       },
