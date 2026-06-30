@@ -53,7 +53,7 @@ const InvoiceDetail = () => {
   useEffect(() => {
     const fetchInvoice = async () => {
       try {
-        const response = await api.get('/api/invoices/${id}');
+        const response = await api.get(`/api/invoices/${id}`);
         setInvoice(response.data);
       } catch (error) {
         console.error('Failed to fetch invoice', error);
