@@ -100,11 +100,7 @@ const InvoiceDetail = () => {
       day: 'numeric' 
     });
   };
-  const today = new Date().toLocaleDateString('th-TH', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  const today = '30 มิถุนายน 2569';
 
   const fy = invoice.fiscalYear || 2026;
   const thYear = fy + 543;
@@ -314,7 +310,7 @@ const InvoiceDetail = () => {
                     </tr>
                     <tr>
                       <td style={{ fontWeight: 'bold' }} colSpan={2}>กรุณาชำระภายในวันที่</td>
-                      <td colSpan={2}>31 กรกฏาคม 2569</td>
+                      <td colSpan={2}>31 กรกฎาคม 2569</td>
                     </tr>
                   </tbody>
                 </table>
