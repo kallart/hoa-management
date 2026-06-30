@@ -188,7 +188,7 @@ const Payments = () => {
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 style={{ 
-                  padding: '8px 16px', 
+                  padding: '4px 12px', fontSize: '0.85rem', 
                   borderRadius: '20px', 
                   border: `1px solid ${isActive ? statusColor : 'var(--color-border)'}`, 
                   backgroundColor: isActive ? statusColor : 'white', 
@@ -197,7 +197,7 @@ const Payments = () => {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease',
-                  fontSize: '0.9rem'
+                  
                 }}
               >
                 {status || 'ทั้งหมด'}
@@ -380,9 +380,9 @@ const Payments = () => {
               
               {selectedInvoice.payments && selectedInvoice.payments.some(p => p.receiptNumber !== null) && (
                 <div style={{ borderTop: '1px dashed #D1D5DB', paddingTop: '10px', marginTop: '10px' }}>
-                  <span style={{ color: '#4B5563', fontSize: '0.9rem', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>ประวัติการชำระเงินที่ผ่านการตรวจสอบ:</span>
+                  <span style={{ color: '#4B5563', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>ประวัติการชำระเงินที่ผ่านการตรวจสอบ:</span>
                   {selectedInvoice.payments.filter(p => p.receiptNumber !== null).sort((a,b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime()).map(p => (
-                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--color-success)', marginBottom: '3px' }}>
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success)', marginBottom: '3px' }}>
                       <span>- ใบเสร็จ {p.receiptNumber}</span>
                       <span>ชำระไป {p.amount.toLocaleString(undefined, {minimumFractionDigits: 2})} บาท</span>
                     </div>

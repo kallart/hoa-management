@@ -177,7 +177,7 @@ const Properties = () => {
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 style={{ 
-                  padding: '8px 16px', 
+                  padding: '4px 12px', fontSize: '0.85rem', 
                   borderRadius: '20px', 
                   border: `1px solid ${isActive ? statusColor : 'var(--color-border)'}`, 
                   backgroundColor: isActive ? statusColor : 'white', 

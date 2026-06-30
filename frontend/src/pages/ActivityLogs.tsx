@@ -56,7 +56,7 @@ const ActivityLogs = () => {
         <button 
           onClick={fetchLogs} 
           style={{ 
-            padding: '8px 16px', 
+            padding: '4px 12px', fontSize: '0.85rem', 
             backgroundColor: 'var(--color-primary)', 
             color: 'white', 
             border: 'none', 
