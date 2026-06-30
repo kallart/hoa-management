@@ -7,6 +7,21 @@ import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
+
+async function addLog(action: string, description: string, houseNumber?: string) {
+  try {
+    await prisma.activityLog.create({
+      data: {
+        action,
+        description,
+        houseNumber
+      }
+    });
+  } catch (error) {
+    console.error('Failed to save log:', error);
+  }
+}
+
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -197,6 +212,8 @@ app.put('/api/properties/:id', async (req, res) => {
       });
     }
 
+    await addLog('แก้ไขข้อมูลบ้าน', `อัปเดตข้อมูลและลดยอด/เพิ่มยอดสำหรับบ้านเลขที่ ${property.houseNumber}`, property.houseNumber);
+
     res.json(property);
   } catch (error) {
     console.error(error);
@@ -276,7 +293,8 @@ app.get('/api/payments/:id', async (req, res) => {
 app.delete('/api/payments/:id', async (req, res) => {
   try {
     const payment = await prisma.payment.findUnique({
-      where: { id: req.params.id }
+      where: { id: req.params.id },
+      include: { invoice: { include: { property: true } } }
     });
     if (!payment) return res.status(404).json({ error: 'Payment not found' });
 
@@ -292,6 +310,8 @@ app.delete('/api/payments/:id', async (req, res) => {
     await prisma.payment.delete({
       where: { id: req.params.id }
     });
+
+    await addLog('ยกเลิกรายการ', `ยกเลิกรายการชำระเงินยอด ${payment.amount} บาท`, payment.invoice?.property?.houseNumber);
 
     // Check remaining payments and update status
     const remainingPayments = await prisma.payment.findMany({
@@ -362,6 +382,8 @@ app.post('/api/payments', upload.single('slip'), async (req, res) => {
       data: { status: 'รอตรวจสอบยอดเงิน' }
     });
 
+    await addLog('แจ้งชำระเงิน', `แนบสลิปยอด ${amount} บาท`, houseNumber);
+
     res.json(payment);
   } catch (error) {
     console.error('Payment creation error:', error);
@@ -430,10 +452,25 @@ app.post('/api/payments/:id/verify', async (req, res) => {
       data: { status: newInvoiceStatus }
     });
 
+    await addLog('ออกใบเสร็จ', `ตรวจสอบยอดและออกใบเสร็จ ${receiptNumber} ยอด ${payment.amount} บาท`, payment.invoice?.property?.houseNumber);
+
     res.json(updatedPayment);
   } catch (error) {
     console.error('Verify payment error:', error);
     res.status(500).json({ error: 'Failed to verify payment' });
+  }
+});
+
+// Logs
+app.get('/api/logs', async (req, res) => {
+  try {
+    const logs = await prisma.activityLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100 // limit to last 100 logs
+    });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch logs' });
   }
 });
 

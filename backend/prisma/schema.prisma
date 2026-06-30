@@ -93,3 +93,11 @@ model AuditLog {
   userId    String?
   createdAt DateTime @default(now())
 }
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  action      String
+  description String
+  houseNumber String?
+  createdAt   DateTime @default(now())
+}

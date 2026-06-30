@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, Users, FileText, Receipt, Printer, Settings, LogOut } from 'lucide-react';
+import { Home, Users, FileText, Receipt, Printer, Settings, LogOut, History } from 'lucide-react';
 
 const MainLayout = () => {
   return (
@@ -38,6 +38,12 @@ const MainLayout = () => {
             <NavLink to="/receipts" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
               <Printer size={20} />
               <span>พิมพ์ใบเสร็จ</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/logs" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <History size={20} />
+              <span>ประวัติการทำงาน</span>
             </NavLink>
           </li>
         </ul>
