@@ -1,6 +1,9 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Download } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { generateBackupExcel } from '../utils/backupUtils';
 
 interface DashboardStats {
   totalHouses: number;
@@ -19,6 +22,7 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -42,7 +46,39 @@ const Dashboard = () => {
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <div className="flex-between" style={{ marginBottom: '20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-        <h1 className="h1" style={{ marginBottom: 0, whiteSpace: 'nowrap' }}>ภาพรวม</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <h1 className="h1" style={{ marginBottom: 0, whiteSpace: 'nowrap' }}>ภาพรวม</h1>
+          <button 
+            onClick={async () => {
+              setIsBackingUp(true);
+              const success = await generateBackupExcel();
+              if (success) {
+                toast.success('ดาวน์โหลดข้อมูลสำรองสำเร็จ');
+              } else {
+                toast.error('เกิดข้อผิดพลาดในการสำรองข้อมูล');
+              }
+              setIsBackingUp(false);
+            }}
+            disabled={isBackingUp}
+            style={{ 
+              backgroundColor: 'var(--color-surface)', 
+              border: '1px solid var(--color-border)', 
+              color: 'var(--color-primary)', 
+              padding: '6px 12px', 
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              cursor: isBackingUp ? 'wait' : 'pointer',
+              opacity: isBackingUp ? 0.7 : 1
+            }}
+          >
+            <Download size={16} /> 
+            {isBackingUp ? 'กำลังเตรียมไฟล์...' : 'สำรองข้อมูล (Excel)'}
+          </button>
+        </div>
         
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', flexWrap: 'nowrap' }}>
           {['รอแจ้งค่าส่วนกลาง', 'รอการชำระ', 'ชำระบางส่วน', 'รอตรวจสอบยอดเงิน', 'ชำระเต็มจำนวน'].map(status => {
