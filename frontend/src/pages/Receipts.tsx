@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Search, Printer, X } from 'lucide-react';
+import { Search, Printer, X, Image as ImageIcon } from 'lucide-react';
 
 interface Payment {
   id: string;
   amount: number;
   paymentDate: string;
   receiptNumber: string | null;
+  slipUrl?: string | null;
+  createdAt?: string;
   invoice: {
     invoiceNumber: string;
     status: string;
@@ -22,11 +24,15 @@ const Receipts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewReceiptId, setViewReceiptId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
+  const [allPayments, setAllPayments] = useState<Payment[]>([]);
+  const [showSlipsModal, setShowSlipsModal] = useState(false);
+  const [viewSlipUrl, setViewSlipUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReceipts = async () => {
       try {
         const response = await api.get('/api/payments');
+        setAllPayments(response.data);
         const receiptsOnly = response.data.filter((p: Payment) => p.receiptNumber !== null);
         setPayments(receiptsOnly);
       } catch (error) {
@@ -54,6 +60,9 @@ const Receipts = () => {
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
       <div className="flex-between" style={{ marginBottom: '20px', flexShrink: 0 }}>
         <h1 className="h1" style={{ marginBottom: 0 }}>พิมพ์ใบเสร็จ</h1>
+        <button onClick={() => setShowSlipsModal(true)} style={{ backgroundColor: '#3B82F6', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+          <ImageIcon size={18} /> ดูสลิปทั้งหมด
+        </button>
       </div>
 
       <div style={{ backgroundColor: 'var(--color-surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--color-border)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -158,6 +167,61 @@ const Receipts = () => {
             style={{ width: '100%', maxWidth: '900px', flex: 1, backgroundColor: 'white', border: 'none', borderRadius: '8px' }} 
             title="Receipt Print View"
           />
+        </div>
+      )}
+
+      {/* All Slips Modal */}
+      {showSlipsModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', overflowY: 'auto' }}>
+          <div style={{ width: '100%', maxWidth: '1200px', backgroundColor: 'white', borderRadius: '12px', padding: '20px', position: 'relative', minHeight: '500px' }}>
+            <button onClick={() => setShowSlipsModal(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#4B5563' }}>
+              <X size={24} />
+            </button>
+            <h2 style={{ margin: '0 0 20px 0', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-primary-dark)' }}>
+              <ImageIcon size={24} /> คลังสลิปโอนเงินทั้งหมด
+            </h2>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+              {allPayments
+                .filter(p => p.slipUrl)
+                .sort((a, b) => new Date(b.createdAt || b.paymentDate).getTime() - new Date(a.createdAt || a.paymentDate).getTime())
+                .map(p => (
+                  <div key={p.id} style={{ border: '1px solid #E5E7EB', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+                    <div 
+                      style={{ width: '100%', height: '300px', backgroundImage: `url(${p.slipUrl?.startsWith('http') ? p.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + p.slipUrl})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', cursor: 'zoom-in', marginBottom: '15px', borderRadius: '4px', backgroundColor: 'white', border: '1px solid #E5E7EB' }}
+                      onClick={() => setViewSlipUrl(`${p.slipUrl?.startsWith('http') ? p.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + p.slipUrl}`)}
+                    />
+                    <div style={{ fontSize: '0.85rem', textAlign: 'center', color: '#4B5563', width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #D1D5DB', paddingBottom: '5px', marginBottom: '5px' }}>
+                        <b>บ้านเลขที่:</b> <span style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>{p.invoice?.property?.houseNumber}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #D1D5DB', paddingBottom: '5px', marginBottom: '5px' }}>
+                        <b>ยอดเงิน:</b> <span style={{ color: 'var(--color-danger)' }}>{p.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <b>วันที่โอน:</b> <span>{new Date(p.paymentDate).toLocaleDateString('th-TH')}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {allPayments.filter(p => p.slipUrl).length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#6B7280', backgroundColor: '#F3F4F6', borderRadius: '8px' }}>
+                  <ImageIcon size={48} style={{ opacity: 0.5, marginBottom: '10px' }} />
+                  <div>ยังไม่มีสลิปในระบบ</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Slip Image Fullscreen Modal */}
+      {viewSlipUrl && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => setViewSlipUrl(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+            <X size={40} />
+          </button>
+          <img src={viewSlipUrl} alt="Slip Fullscreen" style={{ maxWidth: '95%', maxHeight: '95vh', objectFit: 'contain' }} />
         </div>
       )}
     </div>
