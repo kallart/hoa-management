@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { Search, Download, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { generateBackupExcel } from '../utils/backupUtils';
 
 interface Property {
   id: string;
@@ -27,10 +28,11 @@ interface Property {
 }
 
 const Properties = () => {
-  const { isAdmin } = useAuth();
-  const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [statusFilter, setStatusFilter] = useState('');
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [editForm, setEditForm] = useState({ ownerName: '', plot: '', landArea: '', parkingFee: '', arrears: '' });
@@ -139,8 +141,21 @@ const Properties = () => {
       <div className="flex-between" style={{ marginBottom: '20px', flexShrink: 0 }}>
         <h1 className="h1" style={{ marginBottom: 0 }}>ข้อมูลบ้านและสมาชิก</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-primary)', padding: '10px 15px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Download size={18} /> Export Excel
+          <button 
+            onClick={async () => {
+              setIsBackingUp(true);
+              const success = await generateBackupExcel();
+              if (success) {
+                toast.success('ดาวน์โหลดข้อมูลสำรองสำเร็จ');
+              } else {
+                toast.error('เกิดข้อผิดพลาดในการสำรองข้อมูล');
+              }
+              setIsBackingUp(false);
+            }}
+            disabled={isBackingUp}
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-primary)', padding: '10px 15px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: isBackingUp ? 'wait' : 'pointer', opacity: isBackingUp ? 0.7 : 1 }}
+          >
+            <Download size={18} /> {isBackingUp ? 'กำลังเตรียมไฟล์...' : 'สำรองข้อมูล (Excel)'}
           </button>
           {isAdmin && (
             <button style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' }}>
