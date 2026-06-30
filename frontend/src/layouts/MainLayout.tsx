@@ -80,6 +80,12 @@ const MainLayout = () => {
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-primary-light)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
               {user?.role === 'ADMIN' ? 'AD' : 'VW'}
             </div>
+            <button 
+              onClick={handleLogout} 
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', borderRadius: '6px', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              <LogOut size={16} /> ออกจากระบบ
+            </button>
           </div>
         </header>
         <Outlet />
