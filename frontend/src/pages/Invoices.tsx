@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { Search, Printer, Filter, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Invoice {
   id: string;
@@ -20,6 +21,7 @@ interface Invoice {
 }
 
 const Invoices = () => {
+  const { isAdmin } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -85,9 +87,11 @@ const Invoices = () => {
           <Link to="/invoices/batch-print" target="_blank" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-primary)', padding: '10px 15px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             <Printer size={18} /> พิมพ์ใบแจ้งทั้งหมด
           </Link>
-          <button style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' }}>
-            + สร้างใบแจ้งหนี้ใหม่
-          </button>
+          {isAdmin && (
+            <button style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' }}>
+              + สร้างใบแจ้งหนี้ใหม่
+            </button>
+          )}
         </div>
       </div>
 
@@ -154,7 +158,7 @@ const Invoices = () => {
               {filtered.map((inv) => (
                 <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                    {(inv.status === 'รอแจ้งค่าส่วนกลาง' || inv.status === 'unpaid') && (
+                    {isAdmin && (inv.status === 'รอแจ้งค่าส่วนกลาง' || inv.status === 'unpaid') && (
                       <button 
                         onClick={() => handleUpdateStatus(inv.id, 'รอการชำระ')}
                         style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -163,7 +167,7 @@ const Invoices = () => {
                         <CheckCircle2 size={20} />
                       </button>
                     )}
-                    {(inv.status === 'รอการชำระ' || inv.status === 'overdue') && (
+                    {isAdmin && (inv.status === 'รอการชำระ' || inv.status === 'overdue') && (
                       <button 
                         onClick={() => handleUpdateStatus(inv.id, 'รอแจ้งค่าส่วนกลาง')}
                         style={{ background: 'none', border: 'none', color: 'var(--color-success)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}

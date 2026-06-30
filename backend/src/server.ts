@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import path from 'path';
@@ -27,6 +29,23 @@ const supabaseKey = process.env.SUPABASE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 const app = express();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'hoa_super_secret_key_2026';
+
+async function initializeUsers() {
+  const adminExists = await prisma.user.findUnique({ where: { username: 'admin' } });
+  if (!adminExists) {
+    const hashedAdminPassword = await bcrypt.hash('admin123', 10);
+    await prisma.user.create({ data: { username: 'admin', password: hashedAdminPassword, role: 'ADMIN' } });
+  }
+
+  const viewerExists = await prisma.user.findUnique({ where: { username: 'viewer' } });
+  if (!viewerExists) {
+    const hashedViewerPassword = await bcrypt.hash('viewer123', 10);
+    await prisma.user.create({ data: { username: 'viewer', password: hashedViewerPassword, role: 'VIEWER' } });
+  }
+}
+initializeUsers();
+
 app.use(cors());
 app.use(express.json());
 
@@ -41,6 +60,51 @@ const upload = multer({ storage });
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'HOA Management API is running' });
 });
+
+// Authentication
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { username } });
+    
+    if (!user) {
+      return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Middleware
+const authenticateToken = (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Access denied' });
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+const requireAdmin = (req: any, res: any, next: any) => {
+  if (req.user?.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+app.use('/api', authenticateToken);
 
 // Settings
 app.get('/api/settings', async (req, res) => {
@@ -170,7 +234,7 @@ app.get('/api/properties', async (req, res) => {
   }
 });
 
-app.put('/api/properties/:id', async (req, res) => {
+app.put('/api/properties/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { plot, ownerName, landArea, parkingFee, arrears } = req.body;
   try {
@@ -250,7 +314,7 @@ app.get('/api/invoices/:id', async (req, res) => {
   }
 });
 
-app.put('/api/invoices/:id/status', async (req, res) => {
+app.put('/api/invoices/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const invoice = await prisma.invoice.update({
@@ -290,7 +354,7 @@ app.get('/api/payments/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/payments/:id', async (req, res) => {
+app.delete('/api/payments/:id', requireAdmin, async (req, res) => {
   try {
     const payment = await prisma.payment.findUnique({
       where: { id: req.params.id },
@@ -337,7 +401,7 @@ app.delete('/api/payments/:id', async (req, res) => {
   }
 });
 
-app.post('/api/payments', upload.single('slip'), async (req, res) => {
+app.post('/api/payments', upload.single('slip'), requireAdmin, async (req, res) => {
   try {
     const { invoiceId, amount, paymentMethod, paymentDate, referenceNumber, notes, houseNumber } = req.body;
     let slipUrl = null;
@@ -391,7 +455,7 @@ app.post('/api/payments', upload.single('slip'), async (req, res) => {
   }
 });
 
-app.post('/api/payments/:id/verify', async (req, res) => {
+app.post('/api/payments/:id/verify', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     

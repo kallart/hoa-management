@@ -1,7 +1,16 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Users, FileText, Receipt, Printer, Settings, LogOut, History } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const MainLayout = () => {
+  const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="app-container">
       {/* Sidebar */}
@@ -49,11 +58,13 @@ const MainLayout = () => {
         </ul>
 
         <div className="nav-links" style={{ paddingBottom: '20px', flex: 'none' }}>
-          <div className="nav-item" style={{ marginTop: '20px' }}>
-            <Settings size={20} />
-            <span>ตั้งค่าระบบ</span>
-          </div>
-          <div className="nav-item" style={{ color: 'var(--color-danger)' }}>
+          {isAdmin && (
+            <div className="nav-item" style={{ marginTop: '20px' }}>
+              <Settings size={20} />
+              <span>ตั้งค่าระบบ</span>
+            </div>
+          )}
+          <div className="nav-item" style={{ color: 'var(--color-danger)', cursor: 'pointer' }} onClick={handleLogout}>
             <LogOut size={20} />
             <span>ออกจากระบบ</span>
           </div>
@@ -65,8 +76,10 @@ const MainLayout = () => {
         <header className="topbar">
           <div className="h2" style={{ marginBottom: 0 }}>นิติบุคคลหมู่บ้านจัดสรร รอยัล ราชาวดี</div>
           <div className="flex-center" style={{ gap: '15px' }}>
-            <span className="text-muted">ปีงบประมาณ: กรกฏาคม 2026 - มิถุนายน 2027</span>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-primary-light)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>AD</div>
+            <span className="text-muted">เข้าสู่ระบบโดย: {user?.username} ({user?.role})</span>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-primary-light)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+              {user?.role === 'ADMIN' ? 'AD' : 'VW'}
+            </div>
           </div>
         </header>
         <Outlet />

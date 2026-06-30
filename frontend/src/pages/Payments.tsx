@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 import { Search, Upload, CheckCircle, X, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { applyWatermark } from '../utils/watermark';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Invoice {
   id: string;
@@ -27,6 +28,7 @@ const getRemainingAmount = (invoice: Invoice | null) => {
 };
 
 const Payments = () => {
+  const { isAdmin } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -250,7 +252,7 @@ const Payments = () => {
                       <>
                         {inv.status === 'รอตรวจสอบยอดเงิน' && (() => {
                           const unverifiedPayment = inv.payments?.find(p => !p.receiptNumber);
-                          return unverifiedPayment ? (
+                          return unverifiedPayment && isAdmin ? (
                             <button 
                               onClick={() => handleVerifyPayment(inv, unverifiedPayment.id)}
                               style={{ backgroundColor: 'var(--color-success)', color: 'white', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
@@ -282,7 +284,7 @@ const Payments = () => {
                             พิมพ์ใบเสร็จ
                           </button>
                         )}
-                        {(inv.status === 'รอตรวจสอบยอดเงิน' || inv.status === 'ชำระเต็มจำนวน' || inv.status === 'ชำระแล้ว') && (
+                        {isAdmin && (inv.status === 'รอตรวจสอบยอดเงิน' || inv.status === 'ชำระเต็มจำนวน' || inv.status === 'ชำระแล้ว') && (
                           <button 
                             onClick={() => handleCancelPayment(inv)}
                             style={{ backgroundColor: '#FEE2E2', color: '#EF4444', padding: '6px 12px', borderRadius: '6px', border: '1px solid #FECACA', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -294,12 +296,14 @@ const Payments = () => {
                       </>
                     ) : (
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button 
-                          onClick={() => handleOpenPaymentModal(inv)}
-                          style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
-                        >
-                          รับชำระเงิน
-                        </button>
+                        {isAdmin && (
+                          <button 
+                            onClick={() => handleOpenPaymentModal(inv)}
+                            style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
+                          >
+                            รับชำระเงิน
+                          </button>
+                        )}
                         {(() => {
                           const latestSlipPayment = inv.payments ? [...inv.payments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()).find(p => p.slipUrl) : null;
                           return latestSlipPayment ? (
@@ -323,7 +327,7 @@ const Payments = () => {
                             พิมพ์ใบเสร็จ
                           </button>
                         )}
-                        {inv.status === 'ชำระบางส่วน' && (
+                        {isAdmin && inv.status === 'ชำระบางส่วน' && (
                           <button 
                             onClick={() => handleCancelPayment(inv)}
                             style={{ backgroundColor: '#FEE2E2', color: '#EF4444', padding: '6px 12px', borderRadius: '6px', border: '1px solid #FECACA', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}

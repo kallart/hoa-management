@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { Search, Download, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Property {
   id: string;
@@ -26,6 +27,7 @@ interface Property {
 }
 
 const Properties = () => {
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,9 +142,11 @@ const Properties = () => {
           <button style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-primary)', padding: '10px 15px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Download size={18} /> Export Excel
           </button>
-          <button style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' }}>
-            + เพิ่มข้อมูลบ้าน
-          </button>
+          {isAdmin && (
+            <button style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' }}>
+              + เพิ่มข้อมูลบ้าน
+            </button>
+          )}
         </div>
       </div>
 
@@ -230,12 +234,14 @@ const Properties = () => {
                     {getStatusBadge(inv ? inv.status : 'รอแจ้งค่าส่วนกลาง')}
                   </td>
                   <td style={{ padding: '10px 8px', display: 'flex', alignItems: 'center' }}>
-                    <button 
-                      onClick={() => handleEditClick(property)}
-                      style={{ color: 'var(--color-secondary)', fontWeight: 'bold', marginRight: '10px', background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                      แก้ไข
-                    </button>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => handleEditClick(property)}
+                        style={{ color: 'var(--color-secondary)', fontWeight: 'bold', marginRight: '10px', background: 'none', border: 'none', cursor: 'pointer' }}
+                      >
+                        แก้ไข
+                      </button>
+                    )}
                     {inv && (
                       <button 
                         onClick={() => navigate(`/invoices/${inv.id}`)}
