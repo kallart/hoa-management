@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   // admin, staff, board_member
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  id             Int      @id @default(1)
+  villageName    String
+  commonAreaRate Float
+  promptPay      String?
+  updatedAt      DateTime @updatedAt
+}
+
+model Property {
+  id          String   @id @default(uuid())
+  houseNumber String   @unique
+  plot        String?  // แปลงที่
+  landArea    Float
+  ratePerYear Float
+  status      String   @default("active") // active, inactive
+  owner       Owner?
+  invoices    Invoice[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Owner {
+  id         String   @id @default(uuid())
+  propertyId String   @unique
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String?
+  email      String?
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique // INV-YYYY-XXXX
+  fiscalYear    Int
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id])
+  amount        Float
+  arrears       Float    @default(0) // ค้างชำระจากปีก่อน
+  interest      Float    @default(0) // ดอกเบี้ย
+  commonFee     Float    @default(0) // เงินส่วนกลาง
+  parkingFee    Float    @default(0) // ค่าที่จอดรถ
+  dueDate       DateTime
+  status        String   @default("รอแจ้งค่าส่วนกลาง") // รอแจ้งค่าส่วนกลาง, รอการชำระ, รอตรวจสอบยอดเงิน, ชำระแล้ว, ออกใบเสร็จแล้ว
+  payments      Payment[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  invoiceId       String
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
+  amount          Float
+  paymentMethod   String   // transfer, cash
+  referenceNumber String?
+  slipUrl         String?
+  receiptNumber   String?  @unique
+  paymentDate     DateTime
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  tableName String
+  recordId  String
+  oldData   String?
+  newData   String?
+  userId    String?
+  createdAt DateTime @default(now())
+}

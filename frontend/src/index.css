@@ -1,0 +1,281 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wdth,wght@62.5..100,100..900&display=swap');
+
+:root {
+  /* Color Palette - Navy Blue Theme */
+  --color-primary: #0A192F; /* Deep Navy */
+  --color-primary-light: #112240; /* Lighter Navy */
+  --color-primary-dark: #020C1B; /* Darker Navy */
+  --color-secondary: #64FFDA; /* Teal Accent */
+  --color-accent: #E6F1FF; /* Light Text */
+  --color-text-main: #8892B0; /* Muted Text */
+  --color-white: #FFFFFF;
+  --color-background: #F4F7F6;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Typography */
+  --font-family: 'Noto Sans Thai', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: 16px;
+  background-color: var(--color-background);
+  color: var(--color-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+/* Base Layout */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 175px;
+  background-color: var(--color-primary);
+  color: var(--color-accent);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 20px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--color-primary-light);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-links {
+  list-style: none;
+  padding: 20px 0;
+  flex: 1;
+}
+
+.nav-item {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--color-text-main);
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover, .nav-item.active {
+  background-color: var(--color-primary-light);
+  color: var(--color-secondary);
+  border-right: 3px solid var(--color-secondary);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background);
+  overflow-x: hidden;
+}
+
+.topbar {
+  height: 60px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  box-shadow: var(--shadow-sm);
+}
+
+.page-container {
+  padding: 30px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Typography Classes */
+.h1 { font-size: 2rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; }
+.h2 { font-size: 1.5rem; font-weight: 600; color: var(--color-primary); margin-bottom: 1rem; }
+.text-muted { color: #64748B; }
+
+/* Dashboard Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (min-width: 1024px) {
+  .kpi-grid.custom-kpi-grid {
+    grid-template-columns: 1.4fr 0.6fr 1fr 1fr;
+  }
+}
+
+.kpi-card {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-title {
+  font-size: 0.875rem;
+  color: var(--color-text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Charts Section */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+/* Utilities */
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+
+.invoice-page-container {
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+/* Print Styles */
+@media print {
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .sidebar, .topbar, .print-hide, .no-print {
+    display: none !important;
+  }
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .page-container {
+    background-color: white !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .scale-transform-wrapper {
+    transform: none !important;
+    width: 100% !important;
+    display: block !important;
+  }
+  .print-scale-wrapper {
+    display: block !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #invoice-print-area, #receipt-print-area {
+    margin: 0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Disable React's auto-scale on screen during print and center vertically */
+  .print-scale-wrapper {
+    height: 100vh !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .scale-transform-wrapper {
+    transform: none !important;
+    height: auto !important;
+    display: block !important;
+  }
+  
+  /* Let the browser handle scaling during print */
+  .app-container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .page-container {
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .invoice-page-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+.hover-row {
+  transition: background-color 0.2s;
+}
+.hover-row:hover {
+  background-color: #f3f4f6 !important;
+}
