@@ -12,7 +12,7 @@ model User {
   id        String   @id @default(uuid())
   username  String   @unique
   password  String
-  role      String   // admin, staff, board_member
+  role      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -26,54 +26,53 @@ model Setting {
 }
 
 model Property {
-  id          String   @id @default(uuid())
-  houseNumber String   @unique
-  plot        String?  // แปลงที่
+  id          String    @id @default(uuid())
+  houseNumber String    @unique
+  plot        String?
   landArea    Float
   ratePerYear Float
-  status      String   @default("active") // active, inactive
-  owner       Owner?
+  status      String    @default("active")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   invoices    Invoice[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  owner       Owner?
 }
 
 model Owner {
   id         String   @id @default(uuid())
   propertyId String   @unique
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   name       String
   phone      String?
   email      String?
   address    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model Invoice {
-  id            String   @id @default(uuid())
-  invoiceNumber String   @unique // INV-YYYY-XXXX
+  id            String    @id @default(uuid())
+  invoiceNumber String    @unique
   fiscalYear    Int
   propertyId    String
-  property      Property @relation(fields: [propertyId], references: [id])
   amount        Float
-  arrears       Float    @default(0) // ค้างชำระจากปีก่อน
-  interest      Float    @default(0) // ดอกเบี้ย
-  commonFee     Float    @default(0) // เงินส่วนกลาง
-  parkingFee    Float    @default(0) // ค่าที่จอดรถ
+  arrears       Float     @default(0)
+  interest      Float     @default(0)
+  commonFee     Float     @default(0)
+  parkingFee    Float     @default(0)
   dueDate       DateTime
-  status        String   @default("รอแจ้งค่าส่วนกลาง") // รอแจ้งค่าส่วนกลาง, รอการชำระ, รอตรวจสอบยอดเงิน, ชำระแล้ว, ออกใบเสร็จแล้ว
+  status        String    @default("รอแจ้งค่าส่วนกลาง")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  property      Property  @relation(fields: [propertyId], references: [id])
   payments      Payment[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 }
 
 model Payment {
   id              String   @id @default(uuid())
   invoiceId       String
-  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
   amount          Float
-  paymentMethod   String   // transfer, cash
+  paymentMethod   String
   referenceNumber String?
   slipUrl         String?
   receiptNumber   String?  @unique
@@ -81,6 +80,7 @@ model Payment {
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
 }
 
 model AuditLog {

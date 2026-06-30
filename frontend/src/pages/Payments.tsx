@@ -115,7 +115,7 @@ const Payments = () => {
     }
     if (confirm('ตรวจสอบสลิปและยืนยันการรับเงินใช่หรือไม่? ระบบจะออกใบเสร็จให้อัตโนมัติ')) {
       try {
-        await api.post('/api/payments/${paymentId}/verify');
+        await api.post(`/api/payments/${paymentId}/verify`);
         toast.success('ตรวจสอบยอดเงินและออกใบเสร็จเรียบร้อยแล้ว');
         fetchInvoices();
       } catch (error: any) {
@@ -131,7 +131,7 @@ const Payments = () => {
     const paymentId = sortedPayments[0].id;
     if (confirm('คุณต้องการยกเลิกและลบข้อมูลนี้ใช่หรือไม่? ข้อมูลสลิปและใบเสร็จ (ถ้ามี) จะถูกลบออกทั้งหมด')) {
       try {
-        await api.delete('/api/payments/${paymentId}');
+        await api.delete(`/api/payments/${paymentId}`);
         toast.success('ยกเลิกการแจ้งชำระเรียบร้อยแล้ว');
         fetchInvoices();
       } catch (error: any) {
