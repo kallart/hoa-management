@@ -375,7 +375,7 @@ app.delete('/api/payments/:id', requireAdmin, async (req, res) => {
       where: { id: req.params.id }
     });
 
-    await addLog('ยกเลิกรายการ', `ยกเลิกรายการชำระเงินยอด ${payment.amount} บาท`, payment.invoice?.property?.houseNumber);
+    await addLog('ยกเลิกรายการ', `ยกเลิกรายการชำระเงินยอด ${Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`, payment.invoice?.property?.houseNumber);
 
     // Check remaining payments and update status
     const remainingPayments = await prisma.payment.findMany({
@@ -446,7 +446,7 @@ app.post('/api/payments', upload.single('slip'), requireAdmin, async (req, res) 
       data: { status: 'รอตรวจสอบยอดเงิน' }
     });
 
-    await addLog('แจ้งชำระเงิน', `แนบสลิปยอด ${amount} บาท`, houseNumber);
+    await addLog('แจ้งชำระเงิน', `แนบสลิปยอด ${Number(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`, houseNumber);
 
     res.json(payment);
   } catch (error) {
@@ -516,7 +516,7 @@ app.post('/api/payments/:id/verify', requireAdmin, async (req, res) => {
       data: { status: newInvoiceStatus }
     });
 
-    await addLog('ออกใบเสร็จ', `ตรวจสอบยอดและออกใบเสร็จ ${receiptNumber} ยอด ${payment.amount} บาท`, payment.invoice?.property?.houseNumber);
+    await addLog('ออกใบเสร็จ', `ตรวจสอบยอดและออกใบเสร็จ ${receiptNumber} ยอด ${Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`, payment.invoice?.property?.houseNumber);
 
     res.json(updatedPayment);
   } catch (error) {

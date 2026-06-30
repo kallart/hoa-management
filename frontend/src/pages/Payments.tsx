@@ -384,7 +384,7 @@ const Payments = () => {
                   {selectedInvoice.payments.filter(p => p.receiptNumber !== null).sort((a,b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime()).map(p => (
                     <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success)', marginBottom: '3px' }}>
                       <span>- ใบเสร็จ {p.receiptNumber}</span>
-                      <span>ชำระไป {p.amount.toLocaleString(undefined, {minimumFractionDigits: 2})} บาท</span>
+                      <span>ชำระไป {p.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท</span>
                     </div>
                   ))}
                 </div>
