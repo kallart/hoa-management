@@ -12,7 +12,7 @@ interface PaymentDetailType {
   paymentDate: string;
   createdAt: string;
   paymentMethod: string;
-  receiptNumber: string | null;
+  receiptNumber: string | null; slipUrl?: string | null;
   invoice: {
     invoiceNumber: string;
     amount: number;

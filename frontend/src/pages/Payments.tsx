@@ -263,7 +263,7 @@ const Payments = () => {
                           const latestSlipPayment = inv.payments ? [...inv.payments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()).find(p => p.slipUrl) : null;
                           return latestSlipPayment ? (
                             <button 
-                              onClick={() => setViewSlipUrl(`${latestSlipPayment.slipUrl.startsWith('http') ? latestSlipPayment.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + latestSlipPayment.slipUrl}`)}
+                              onClick={() => setViewSlipUrl(`${(latestSlipPayment.slipUrl || "").startsWith('http') ? (latestSlipPayment.slipUrl || "") : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + (latestSlipPayment.slipUrl || "")}`)}
                               style={{ backgroundColor: '#3B82F6', color: 'white', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
                               title="ดูสลิปการโอนเงินล่าสุด"
                             >
@@ -304,7 +304,7 @@ const Payments = () => {
                           const latestSlipPayment = inv.payments ? [...inv.payments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()).find(p => p.slipUrl) : null;
                           return latestSlipPayment ? (
                             <button 
-                              onClick={() => setViewSlipUrl(`${latestSlipPayment.slipUrl.startsWith('http') ? latestSlipPayment.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + latestSlipPayment.slipUrl}`)}
+                              onClick={() => setViewSlipUrl(`${(latestSlipPayment.slipUrl || "").startsWith('http') ? (latestSlipPayment.slipUrl || "") : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + (latestSlipPayment.slipUrl || "")}`)}
                               style={{ backgroundColor: '#3B82F6', color: 'white', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
                               title="ดูสลิปการโอนเงินล่าสุด"
                             >
