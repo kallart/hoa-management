@@ -62,7 +62,7 @@ const ReceiptDetail = () => {
   useEffect(() => {
     const fetchPayment = async () => {
       try {
-        const response = await api.get('/api/payments/${id}');
+        const response = await api.get(`/api/payments/${id}`);
         setPayment(response.data);
       } catch (error) {
         console.error('Failed to fetch payment', error);

@@ -63,7 +63,7 @@ const Properties = () => {
     if (!editingProperty) return;
     setIsSaving(true);
     try {
-      await api.put('/api/properties/${editingProperty.id}', editForm);
+      await api.put(`/api/properties/${editingProperty.id}`, editForm);
       setEditingProperty(null);
       fetchProperties();
       toast.success('บันทึกข้อมูลสำเร็จ');

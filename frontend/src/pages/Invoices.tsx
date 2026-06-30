@@ -38,7 +38,7 @@ const Invoices = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
-      await api.put('/api/invoices/${id}/status', { status: newStatus });
+      await api.put(`/api/invoices/${id}/status`, { status: newStatus });
       const response = await api.get('/api/invoices');
       setInvoices(response.data);
       toast.success('อัปเดตสถานะสำเร็จ');
