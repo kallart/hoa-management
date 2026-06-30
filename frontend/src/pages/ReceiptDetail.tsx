@@ -10,7 +10,7 @@ interface PaymentDetailType {
   id: string;
   amount: number;
   paymentDate: string;
-  createdAt: string;
+  createdAt: string; updatedAt: string;
   paymentMethod: string;
   receiptNumber: string | null; slipUrl?: string | null;
   invoice: {
@@ -147,7 +147,7 @@ const ReceiptDetail = () => {
     window.print();
   };
 
-  const today = new Date().toLocaleDateString('th-TH', { 
+  const today = new Date(payment.updatedAt || new Date()).toLocaleDateString('th-TH', { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
