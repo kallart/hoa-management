@@ -37,7 +37,12 @@ const Properties = () => {
   const fetchProperties = async () => {
     try {
       const response = await api.get('/api/properties');
-      setProperties(response.data);
+        const sortedProperties = response.data.sort((a: any, b: any) => {
+          const numA = parseInt(a.houseNumber.split('/')[1] || '0', 10);
+          const numB = parseInt(b.houseNumber.split('/')[1] || '0', 10);
+          return numA - numB;
+        });
+        setProperties(sortedProperties);
     } catch (error) {
       console.error('Failed to fetch properties', error);
     }
