@@ -61,21 +61,21 @@ const Invoices = () => {
     switch (status) {
       case 'รอแจ้งค่าส่วนกลาง':
       case 'unpaid': // fallback for old data
-        return <span style={{ backgroundColor: '#9CA3AF', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>รอแจ้งค่าส่วนกลาง</span>;
+        return <span style={{ backgroundColor: '#9CA3AF', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>รอแจ้งค่าส่วนกลาง</span>;
       case 'รอการชำระ':
       case 'overdue': // fallback for old data
-        return <span style={{ backgroundColor: 'var(--color-warning)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>รอการชำระ</span>;
+        return <span style={{ backgroundColor: 'var(--color-warning)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>รอการชำระ</span>;
       case 'ชำระบางส่วน':
-        return <span style={{ backgroundColor: '#8B5CF6', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>ชำระบางส่วน</span>;
+        return <span style={{ backgroundColor: '#8B5CF6', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>ชำระบางส่วน</span>;
       case 'รอตรวจสอบยอดเงิน':
       case 'partial': // fallback for old data
-        return <span style={{ backgroundColor: '#3B82F6', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>รอตรวจสอบยอดเงิน</span>;
+        return <span style={{ backgroundColor: '#3B82F6', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>รอตรวจสอบยอดเงิน</span>;
       case 'ชำระแล้ว':
       case 'paid': // fallback for old data
       case 'ชำระเต็มจำนวน':
-        return <span style={{ backgroundColor: 'var(--color-success)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>{status}</span>;
+        return <span style={{ backgroundColor: 'var(--color-success)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{status}</span>;
       default:
-        return <span style={{ backgroundColor: 'var(--color-text-main)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>{status || 'รอแจ้งค่าส่วนกลาง'}</span>;
+        return <span style={{ backgroundColor: 'var(--color-text-main)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{status || 'รอแจ้งค่าส่วนกลาง'}</span>;
     }
   };
 

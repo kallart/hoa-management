@@ -43,7 +43,9 @@ const Receipts = () => {
   }, []);
 
   const getStatusBadge = (status: string) => {
-    return <span style={{ backgroundColor: 'var(--color-success)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>{status}</span>;
+    let bgColor = 'var(--color-success)';
+    if (status === 'ชำระบางส่วน' || status === 'partial') bgColor = '#8B5CF6';
+    return <span style={{ backgroundColor: bgColor, color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{status}</span>;
   };
 
   const filtered = payments.filter(p => 
