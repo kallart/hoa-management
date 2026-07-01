@@ -108,7 +108,7 @@ const Dashboard = () => {
       </div>
 
       <div className="charts-grid" style={{ flex: 1, minHeight: 0, marginBottom: 0 }}>
-        <div className="chart-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div className="chart-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '350px' }}>
           <h2 className="h2" style={{ fontSize: '1.25rem', flexShrink: 0 }}>การรับชำระรายเดือน</h2>
           <div style={{ flex: 1, minHeight: 0, marginTop: '10px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -124,7 +124,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="chart-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div className="chart-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '350px' }}>
           <h2 className="h2" style={{ fontSize: '1.25rem', flexShrink: 0 }}>สัดส่วนการชำระเงิน</h2>
           <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', marginTop: '20px' }}>
             <ResponsiveContainer width="100%" height="100%">
