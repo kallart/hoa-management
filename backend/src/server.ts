@@ -137,9 +137,10 @@ app.get('/api/dashboard', async (req, res) => {
       let intervals: { name: string; start: Date; end: Date }[] = [];
 
       if (timeframe === 'daily') {
-        for (let i = 13; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(d.getDate() - i);
+        const startDate = new Date('2026-06-30T00:00:00Z');
+        for (let i = 0; i < 14; i++) {
+          const d = new Date(startDate);
+          d.setDate(d.getDate() + i);
           const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
           const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
           intervals.push({ name: `${d.getDate()}/${d.getMonth() + 1}`, start, end });
