@@ -140,7 +140,7 @@ const Invoices = () => {
           </div>
         </div>
 
-        <div style={{ overflow: 'auto', flex: 1 }}>
+        <div className="table-responsive" style={{ flex: 1 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
             <thead>
               <tr style={{ color: 'var(--color-text-main)' }}>

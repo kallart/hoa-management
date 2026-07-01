@@ -81,7 +81,7 @@ const ActivityLogs = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>กำลังโหลดข้อมูล...</div>
       ) : (
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+        <div className="table-responsive" style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>
