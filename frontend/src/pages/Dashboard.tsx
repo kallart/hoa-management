@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface DashboardStats {
   totalHouses: number;
@@ -19,18 +19,19 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [timeframe, setTimeframe] = useState<'daily'|'weekly'|'monthly'>('monthly');
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await api.get('/api/dashboard');
+        const response = await api.get(`/api/dashboard?timeframe=${timeframe}`);
         setStats(response.data);
       } catch (error) {
         console.error('Failed to fetch dashboard stats', error);
       }
     };
     fetchStats();
-  }, []);
+  }, [timeframe]);
 
   if (!stats) return <div className="page-container"><p>กำลังโหลดข้อมูล...</p></div>;
 
@@ -109,17 +110,32 @@ const Dashboard = () => {
 
       <div className="charts-grid" style={{ flex: 1, minHeight: 0, marginBottom: 0 }}>
         <div className="chart-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '350px' }}>
-          <h2 className="h2" style={{ fontSize: '1.25rem', flexShrink: 0 }}>การรับชำระรายเดือน</h2>
-          <div style={{ flex: 1, minHeight: 0, marginTop: '10px' }}>
+          <div className="flex-between" style={{ flexShrink: 0 }}>
+            <h2 className="h2" style={{ fontSize: '1.25rem', marginBottom: 0 }}>การรับชำระ</h2>
+            <div style={{ display: 'flex', gap: '5px', backgroundColor: 'var(--color-background)', padding: '4px', borderRadius: '8px' }}>
+              <button 
+                onClick={() => setTimeframe('daily')}
+                style={{ padding: '4px 12px', fontSize: '0.85rem', borderRadius: '6px', fontWeight: 'bold', backgroundColor: timeframe === 'daily' ? 'white' : 'transparent', color: timeframe === 'daily' ? 'var(--color-primary)' : 'var(--color-text-main)', boxShadow: timeframe === 'daily' ? 'var(--shadow-sm)' : 'none' }}
+              >รายวัน</button>
+              <button 
+                onClick={() => setTimeframe('weekly')}
+                style={{ padding: '4px 12px', fontSize: '0.85rem', borderRadius: '6px', fontWeight: 'bold', backgroundColor: timeframe === 'weekly' ? 'white' : 'transparent', color: timeframe === 'weekly' ? 'var(--color-primary)' : 'var(--color-text-main)', boxShadow: timeframe === 'weekly' ? 'var(--shadow-sm)' : 'none' }}
+              >รายสัปดาห์</button>
+              <button 
+                onClick={() => setTimeframe('monthly')}
+                style={{ padding: '4px 12px', fontSize: '0.85rem', borderRadius: '6px', fontWeight: 'bold', backgroundColor: timeframe === 'monthly' ? 'white' : 'transparent', color: timeframe === 'monthly' ? 'var(--color-primary)' : 'var(--color-text-main)', boxShadow: timeframe === 'monthly' ? 'var(--shadow-sm)' : 'none' }}
+              >รายเดือน</button>
+            </div>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, marginTop: '20px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={stats.monthlyData}>
+              <AreaChart data={stats.monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                <XAxis dataKey="name" axisLine={{ stroke: 'var(--color-border)' }} tickLine={{ stroke: 'var(--color-border)' }} interval={0} tick={false} />
+                <XAxis dataKey="name" axisLine={{ stroke: 'var(--color-border)' }} tickLine={{ stroke: 'var(--color-border)' }} minTickGap={20} tick={{ fontSize: 12, fill: 'var(--color-text-main)' }} />
                 <YAxis hide={true} />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                <Area type="monotone" dataKey="paid" name="แนวโน้ม (บาท)" stroke="var(--color-success)" fill="var(--color-success)" fillOpacity={0.3} />
-                <Bar dataKey="paid" name="รับชำระ (บาท)" fill="var(--color-success)" barSize={20} radius={[4, 4, 0, 0]} />
-              </ComposedChart>
+                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
+                <Area type="monotone" dataKey="paid" name="รับชำระ (บาท)" stroke="var(--color-success)" strokeWidth={3} fill="var(--color-success)" fillOpacity={0.3} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
