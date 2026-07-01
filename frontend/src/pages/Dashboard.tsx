@@ -135,8 +135,8 @@ const Dashboard = () => {
                   cy="100%"
                   startAngle={180}
                   endAngle={0}
-                  innerRadius="160%"
-                  outerRadius="200%"
+                  innerRadius="110%"
+                  outerRadius="140%"
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
