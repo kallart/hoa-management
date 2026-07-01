@@ -40,7 +40,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="flex-between" style={{ marginBottom: '20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
         <h1 className="h1" style={{ marginBottom: 0, whiteSpace: 'nowrap' }}>ภาพรวม</h1>
         
