@@ -48,14 +48,12 @@ const Dashboard = () => {
         <div style={{ 
           display: 'flex', 
           gap: '12px', 
-          overflowX: 'auto', 
           padding: '16px', 
           backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: 'var(--shadow-sm)',
-          flexWrap: 'nowrap',
-          border: '1px solid var(--color-border)',
-          WebkitOverflowScrolling: 'touch'
+          flexWrap: 'wrap',
+          border: '1px solid var(--color-border)'
         }}>
           {['รอแจ้งค่าส่วนกลาง', 'รอการชำระ', 'ชำระบางส่วน', 'รอตรวจสอบยอดเงิน', 'ชำระเต็มจำนวน'].map(status => {
             let statusColor = 'var(--color-primary)';
