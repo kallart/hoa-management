@@ -53,10 +53,9 @@ button {
   font-family: inherit;
 }
 
-/* Base Layout */
 .app-container {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -320,6 +319,7 @@ button {
   
   .page-container {
     padding: 15px;
+    padding-bottom: 80px; /* Extra padding at the bottom for mobile */
   }
   
   .h1 { font-size: 1.5rem; }
