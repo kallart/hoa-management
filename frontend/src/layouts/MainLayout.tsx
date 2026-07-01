@@ -63,7 +63,7 @@ const MainLayout = () => {
           <li>
             <NavLink to="/logs" onClick={closeMenu} className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <History size={20} />
-              <span>ประวัติการทำงาน</span>
+              <span>Activity Logs</span>
             </NavLink>
           </li>
         </ul>

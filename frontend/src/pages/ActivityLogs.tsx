@@ -52,7 +52,7 @@ const ActivityLogs = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-text)' }}>ประวัติการทำงาน</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-text)' }}>Activity Logs</h1>
         <button 
           onClick={fetchLogs} 
           style={{ 
