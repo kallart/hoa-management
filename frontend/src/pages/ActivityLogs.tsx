@@ -50,25 +50,26 @@ const ActivityLogs = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-text)' }}>Activity Logs</h1>
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)', overflow: 'hidden', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexShrink: 0 }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-text)', margin: 0 }}>Activity Logs</h1>
         <button 
           onClick={fetchLogs} 
           style={{ 
-            padding: '4px 12px', fontSize: '0.85rem', 
+            padding: '6px 16px', fontSize: '0.9rem', 
             backgroundColor: 'var(--color-primary)', 
             color: 'white', 
             border: 'none', 
-            borderRadius: '6px', 
-            cursor: 'pointer' 
+            borderRadius: '8px', 
+            cursor: 'pointer',
+            fontWeight: '600'
           }}
         >
           รีเฟรชข้อมูล
         </button>
       </div>
 
-      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px', flexShrink: 0 }}>
         <input 
           type="text" 
           placeholder="🔍 ค้นหาบ้านเลขที่, หรือการกระทำ..." 
@@ -81,7 +82,7 @@ const ActivityLogs = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>กำลังโหลดข้อมูล...</div>
       ) : (
-        <div className="table-responsive" style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+        <div className="table-responsive" style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', flex: 1, overflowY: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>
