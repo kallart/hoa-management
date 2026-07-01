@@ -65,6 +65,8 @@ const Dashboard = () => {
             
             const statusData = (stats.statusCounts && stats.statusCounts[status as keyof typeof stats.statusCounts]) || { count: 0, amount: 0 };
 
+            if (statusData.count === 0) return null;
+
             return (
               <div 
                 key={status}
