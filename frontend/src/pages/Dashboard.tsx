@@ -42,10 +42,21 @@ const Dashboard = () => {
 
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column' }}>
-      <div className="flex-between" style={{ marginBottom: '20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-        <h1 className="h1" style={{ marginBottom: 0, whiteSpace: 'nowrap' }}>ภาพรวม</h1>
+      <div style={{ marginBottom: '20px', flexShrink: 0 }}>
+        <h1 className="h1" style={{ marginBottom: '15px' }}>ภาพรวม</h1>
         
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', flexWrap: 'nowrap' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          overflowX: 'auto', 
+          padding: '16px', 
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: 'var(--shadow-sm)',
+          flexWrap: 'nowrap',
+          border: '1px solid var(--color-border)',
+          WebkitOverflowScrolling: 'touch'
+        }}>
           {['รอแจ้งค่าส่วนกลาง', 'รอการชำระ', 'ชำระบางส่วน', 'รอตรวจสอบยอดเงิน', 'ชำระเต็มจำนวน'].map(status => {
             let statusColor = 'var(--color-primary)';
             if (status === 'รอแจ้งค่าส่วนกลาง') statusColor = '#9CA3AF';
@@ -60,22 +71,22 @@ const Dashboard = () => {
               <div 
                 key={status}
                 style={{ 
-                  padding: '4px 10px', 
+                  padding: '6px 14px', 
                   borderRadius: '20px', 
                   border: `1px solid ${statusColor}`, 
                   backgroundColor: 'white', 
                   color: statusColor,
-                  fontSize: '0.85rem',
+                  fontSize: '0.9rem',
                   fontWeight: '500',
                   whiteSpace: 'nowrap',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '8px'
                 }}
               >
                 <span>{status}</span>
-                <span style={{ backgroundColor: statusColor, color: 'white', padding: '1px 6px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold' }}>{statusData.count}</span>
+                <span style={{ backgroundColor: statusColor, color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{statusData.count}</span>
               </div>
             )
           })}
