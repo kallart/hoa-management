@@ -498,8 +498,11 @@ app.post('/api/payments/:id/verify', requireAdmin, async (req, res) => {
     const totalPreviouslyPaid = previousVerifiedPayments.reduce((sum, p) => sum + p.amount, 0);
     const newTotalPaid = totalPreviouslyPaid + payment.amount;
     
+    const roundedTotalPaid = Math.round(newTotalPaid * 100);
+    const roundedInvoiceAmount = Math.round(payment.invoice.amount * 100);
+
     // It's a partial payment if it doesn't cover the full amount or if it's a subsequent payment
-    const isPartial = newTotalPaid < payment.invoice.amount || verifiedCount > 0;
+    const isPartial = roundedTotalPaid < roundedInvoiceAmount || verifiedCount > 0;
 
     // Generate Receipt Number: REC_YYYY_XXXX_(houseNumber)[-PMx]
     const year = new Date().getFullYear();
@@ -530,7 +533,7 @@ app.post('/api/payments/:id/verify', requireAdmin, async (req, res) => {
     });
 
     // Update Invoice Status based on total paid amount
-    const newInvoiceStatus = newTotalPaid >= payment.invoice.amount ? 'ชำระเต็มจำนวน' : 'ชำระบางส่วน';
+    const newInvoiceStatus = roundedTotalPaid >= roundedInvoiceAmount ? 'ชำระเต็มจำนวน' : 'ชำระบางส่วน';
     await prisma.invoice.update({
       where: { id: payment.invoiceId },
       data: { status: newInvoiceStatus }
