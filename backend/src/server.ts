@@ -192,7 +192,7 @@ app.get('/api/dashboard', async (req, res) => {
         }
   
         const paidInPeriod = payments
-          .filter(p => new Date(p.paymentDate) >= m.start && new Date(p.paymentDate) <= m.end)
+          .filter(p => new Date(p.paymentDate) <= m.end)
           .reduce((sum, p) => sum + p.amount, 0);
         
         const unpaidInPeriod = invoices
