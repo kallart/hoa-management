@@ -177,7 +177,7 @@ const Properties = () => {
               style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid var(--color-border)', outline: 'none' }}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
+          <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
             {['', 'รอแจ้งค่าส่วนกลาง', 'รอการชำระ', 'ชำระบางส่วน', 'รอตรวจสอบยอดเงิน', 'ชำระเต็มจำนวน'].map(status => {
               const isActive = statusFilter === status;
               let statusColor = 'var(--color-primary)';
