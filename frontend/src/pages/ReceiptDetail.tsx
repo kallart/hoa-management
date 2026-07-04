@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import { Printer, ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, X } from 'lucide-react';
+import { Printer, ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, X, Copy } from 'lucide-react';
 import { bahttext } from 'bahttext';
 import { LogoSVG } from '../components/LogoSVG';
 import { AutoShrinkText } from '../components/AutoShrinkText';
@@ -41,6 +41,7 @@ const ReceiptDetail = () => {
   const [allPayments, setAllPayments] = useState<PaymentDetailType[]>([]);
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isCopy, setIsCopy] = useState(false);
   const isEmbedded = window.self !== window.top;
 
   useEffect(() => {
@@ -244,6 +245,11 @@ const ReceiptDetail = () => {
             <Download size={22} />
             <span style={{ fontSize: '0.75rem', marginTop: '6px', fontWeight: 'bold' }}>เซฟ PDF</span>
           </button>
+
+          <button onClick={() => setIsCopy(!isCopy)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', backgroundColor: isCopy ? '#F59E0B' : '#3B82F6', border: 'none', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', color: 'white' }}>
+            <Copy size={22} />
+            <span style={{ fontSize: '0.75rem', marginTop: '6px', fontWeight: 'bold' }}>{isCopy ? 'สำเนา' : 'ต้นฉบับ'}</span>
+          </button>
           
           <button onClick={handlePrint} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', backgroundColor: 'var(--color-primary)', border: 'none', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', color: 'white' }}>
             <Printer size={22} />
@@ -334,7 +340,9 @@ const ReceiptDetail = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid black', padding: '0 20px', borderRadius: '4px', marginBottom: '6px', height: '40px' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.35rem', whiteSpace: 'nowrap', fontFamily: '"Noto Sans Thai", sans-serif', fontStretch: '68%', fontVariationSettings: '"wdth" 68, "wght" 700' }}>ใบเสร็จรับเงิน</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.35rem', whiteSpace: 'nowrap', fontFamily: '"Noto Sans Thai", sans-serif', fontStretch: '68%', fontVariationSettings: '"wdth" 68, "wght" 700' }}>
+                      ใบเสร็จรับเงิน {isCopy ? '(สำเนา)' : '(ต้นฉบับ)'}
+                    </div>
                   </div>
                 </div>
               </div>
