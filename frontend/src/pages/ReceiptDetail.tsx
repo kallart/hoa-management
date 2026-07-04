@@ -511,7 +511,7 @@ const ReceiptDetail = () => {
 
             {/* Attached Slip Image */}
             {payment.slipUrl && (
-              <div className="no-print" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', borderTop: '1px dashed #D1D5DB', paddingTop: '20px' }}>
+              <div className={isCopy ? "" : "no-print"} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', borderTop: '1px dashed #D1D5DB', paddingTop: '20px' }}>
                 <div style={{ fontWeight: 'bold', marginBottom: '15px', color: '#4B5563' }}>เอกสารแนบ (สลิปโอนเงิน)</div>
                 <div 
                   className="slip-image-container"
