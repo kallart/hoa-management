@@ -521,7 +521,7 @@ const ReceiptDetail = () => {
                   <img 
                     src={`${payment.slipUrl.startsWith('http') ? payment.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + payment.slipUrl}`} 
                     alt="Payment Slip" 
-                    style={{ maxWidth: '100%', maxHeight: isCopy ? '270px' : '400px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #E5E7EB', display: 'block' }} 
+                    style={{ maxWidth: '100%', maxHeight: isCopy ? '230px' : '400px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #E5E7EB', display: 'block' }} 
                   />
                   <div className="slip-image-overlay" style={{
                     position: 'absolute',
