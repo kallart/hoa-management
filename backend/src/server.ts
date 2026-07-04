@@ -130,7 +130,7 @@ app.get('/api/dashboard', async (req, res) => {
     const totalOutstanding = totalBilled - totalCollected;
     const collectionRate = totalBilled === 0 ? 0 : Math.round((totalCollected / totalBilled) * 100);
 
-    const housesWithParking = new Set(invoices.filter(inv => inv.parkingFee > 0).map(inv => inv.propertyId)).size + 2;
+    const housesWithParking = new Set(invoices.filter(inv => inv.parkingFee > 0).map(inv => inv.propertyId)).size + 1;
 
     const timeframe = (req.query.timeframe as string) || 'monthly';
       const now = new Date();
