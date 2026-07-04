@@ -511,8 +511,7 @@ const ReceiptDetail = () => {
 
             {/* Attached Slip Image */}
             {payment.slipUrl && (
-              <div className={isCopy ? "" : "no-print"} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', borderTop: '1px dashed #D1D5DB', paddingTop: '20px' }}>
-                <div style={{ fontWeight: 'bold', marginBottom: '15px', color: '#4B5563' }}>เอกสารแนบ (สลิปโอนเงิน)</div>
+              <div className={isCopy ? "" : "no-print"} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', borderTop: '1px dashed #D1D5DB', paddingTop: '15px' }}>
                 <div 
                   className="slip-image-container"
                   style={{ position: 'relative', cursor: 'pointer', display: 'inline-block' }}
@@ -522,7 +521,7 @@ const ReceiptDetail = () => {
                   <img 
                     src={`${payment.slipUrl.startsWith('http') ? payment.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + payment.slipUrl}`} 
                     alt="Payment Slip" 
-                    style={{ maxWidth: '100%', maxHeight: isCopy ? '220px' : '400px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #E5E7EB', display: 'block' }} 
+                    style={{ maxWidth: '100%', maxHeight: isCopy ? '270px' : '400px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #E5E7EB', display: 'block' }} 
                   />
                   <div className="slip-image-overlay" style={{
                     position: 'absolute',
