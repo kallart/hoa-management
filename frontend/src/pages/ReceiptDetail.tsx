@@ -467,22 +467,22 @@ const ReceiptDetail = () => {
                   payment.paymentMethod
                 }
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    {isFullPayment ? '☑' : '☐'} ชำระเต็มจำนวน
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    {!isFullPayment ? '☑' : '☐'} ชำระบางส่วน
-                  </span>
-                </div>
-                {!isFullPayment && (
+              {!isFullPayment && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      ☐ ชำระเต็มจำนวน
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      ☑ ชำระบางส่วน
+                    </span>
+                  </div>
                   <div style={{ paddingLeft: '0', color: '#4B5563' }}>
                     ยอดเงินที่ชำระ <b style={{ color: 'black' }}>{payment.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b> บาท 
                     {' '}(คงค้างอีก <b style={{ color: 'black' }}>{remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b> บาท)
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {previousPayments.length > 0 && (
