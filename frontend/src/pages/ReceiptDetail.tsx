@@ -503,7 +503,7 @@ const ReceiptDetail = () => {
                 {/* Removed Payer Signature */}
               </div>
               <div style={{ flex: 1, textAlign: 'center' }}>
-                <p style={{ margin: '0 0 9px 0', fontSize: '0.95rem' }}>ลงชื่อ ....................................................... ผู้ออกใบเสร็จ</p>
+                <p style={{ margin: '0 0 9px 0', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>ลงชื่อ ....................................................... ผู้ออกใบเสร็จ</p>
                 <p style={{ margin: '0 0 4px 0', fontSize: '0.95rem' }}>(คุณนงพงา เลิศธรรมจินดา)</p>
                 <p style={{ margin: 0, fontSize: '0.95rem' }}>ฝ่ายการเงิน</p>
               </div>
