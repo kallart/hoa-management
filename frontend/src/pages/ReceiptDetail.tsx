@@ -260,7 +260,10 @@ const ReceiptDetail = () => {
 
       {/* Embedded Action Bar */}
       {isEmbedded && (
-        <div className="no-print" style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 100 }}>
+        <div className="no-print" style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 100, display: 'flex', gap: '10px' }}>
+          <button onClick={() => setIsCopy(!isCopy)} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: isCopy ? '#F59E0B' : '#3B82F6', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+            <Copy size={20} /> {isCopy ? 'โหมด: สำเนา' : 'โหมด: ต้นฉบับ'}
+          </button>
           <button onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--color-primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
             <Printer size={20} /> พิมพ์ใบเสร็จ
           </button>
@@ -339,9 +342,12 @@ const ReceiptDetail = () => {
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                  <div style={{ fontSize: '0.9rem', color: '#6B7280', marginBottom: '4px', fontWeight: 'bold' }}>
+                    {isCopy ? '(สำเนา / Copy)' : '(ต้นฉบับ / Original)'}
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid black', padding: '0 20px', borderRadius: '4px', marginBottom: '6px', height: '40px' }}>
                     <div style={{ fontWeight: 'bold', fontSize: '1.35rem', whiteSpace: 'nowrap', fontFamily: '"Noto Sans Thai", sans-serif', fontStretch: '68%', fontVariationSettings: '"wdth" 68, "wght" 700' }}>
-                      ใบเสร็จรับเงิน {isCopy ? '(สำเนา)' : '(ต้นฉบับ)'}
+                      ใบเสร็จรับเงิน
                     </div>
                   </div>
                 </div>
