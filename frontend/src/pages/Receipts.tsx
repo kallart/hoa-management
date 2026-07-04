@@ -28,6 +28,24 @@ const Receipts = () => {
   const [showSlipsModal, setShowSlipsModal] = useState(false);
   const [viewSlipUrl, setViewSlipUrl] = useState<string | null>(null);
 
+  const [printedReceipts, setPrintedReceipts] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('printedReceipts');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  const togglePrinted = (receiptNumber: string) => {
+    setPrintedReceipts(prev => {
+      const next = new Set(prev);
+      if (next.has(receiptNumber)) {
+        next.delete(receiptNumber);
+      } else {
+        next.add(receiptNumber);
+      }
+      localStorage.setItem('printedReceipts', JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
   useEffect(() => {
     const fetchReceipts = async () => {
       try {
@@ -121,6 +139,7 @@ const Receipts = () => {
                 <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 1, borderBottom: '2px solid var(--color-border)', padding: '10px', fontWeight: '600' }}>ชำระวันที่</th>
                 <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 1, borderBottom: '2px solid var(--color-border)', padding: '10px', fontWeight: '600' }}>สถานะ</th>
                 <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 1, borderBottom: '2px solid var(--color-border)', padding: '10px', fontWeight: '600' }}>จัดการ</th>
+                <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 1, borderBottom: '2px solid var(--color-border)', padding: '10px', fontWeight: '600', textAlign: 'center' }}>พิมพ์แล้ว</th>
               </tr>
             </thead>
             <tbody>
@@ -140,15 +159,27 @@ const Receipts = () => {
                     {getStatusBadge(p.invoice.status)}
                   </td>
                   <td style={{ padding: '12px 10px' }}>
-                    <button onClick={() => setViewReceiptId(p.id)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                      <Printer size={16} /> ดู/พิมพ์ใบเสร็จ
+                    <button 
+                      onClick={() => setViewReceiptId(p.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', borderRadius: '6px', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '0.85rem' }}
+                    >
+                      <Printer size={16} /> พิมพ์
                     </button>
+                  </td>
+                  <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={p.receiptNumber ? printedReceipts.has(p.receiptNumber) : false}
+                      onChange={() => p.receiptNumber && togglePrinted(p.receiptNumber)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      title="ทำเครื่องหมายว่าพิมพ์แล้ว"
+                    />
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: 'var(--color-text-main)' }}>
+                  <td colSpan={9} style={{ padding: '30px', textAlign: 'center', color: 'var(--color-text-main)' }}>
                     ไม่พบข้อมูลใบเสร็จ
                   </td>
                 </tr>
