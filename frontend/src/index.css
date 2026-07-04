@@ -287,6 +287,26 @@ button {
 
 /* Responsive Styles */
 @media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block !important;
+  }
+  
+  .topbar {
+    padding: 0 15px;
+  }
+  
+  .topbar .h2 {
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+  
+  .topbar-right-content > span.text-muted {
+    display: none;
+  }
+
   .sidebar {
     position: fixed;
     left: -250px;
