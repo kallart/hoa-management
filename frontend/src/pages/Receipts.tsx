@@ -64,9 +64,8 @@ const Receipts = () => {
     let bgColor = 'var(--color-success)';
     if (status === 'ชำระบางส่วน' || status === 'partial') bgColor = '#8B5CF6';
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bgColor }} />
-        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-main)' }}>{status}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }} title={status}>
+        <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: bgColor }} />
       </div>
     );
   };
