@@ -319,7 +319,9 @@ const ReceiptDetail = () => {
           <div id="receipt-print-area" onClick={() => setIsFullscreen(!isFullscreen)} style={{
             width: '794px',
             minHeight: '1123px',
-            height: 'auto',
+            height: isCopy ? '1123px' : 'auto',
+            display: isCopy ? 'flex' : 'block',
+            flexDirection: 'column',
             margin: isFullscreen ? '0 auto' : '0',
             backgroundColor: 'white',
             padding: '70px 50px 40px 50px',
@@ -511,17 +513,17 @@ const ReceiptDetail = () => {
 
             {/* Attached Slip Image */}
             {payment.slipUrl && (
-              <div className={isCopy ? "" : "no-print"} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', borderTop: '1px dashed #D1D5DB', paddingTop: '15px' }}>
+              <div className={isCopy ? "" : "no-print"} style={{ flex: isCopy ? 1 : 'none', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', borderTop: '1px dashed #D1D5DB', paddingTop: '15px' }}>
                 <div 
                   className="slip-image-container"
-                  style={{ position: 'relative', cursor: 'pointer', display: 'inline-block' }}
+                  style={{ position: 'relative', cursor: 'pointer', display: 'flex', justifyContent: 'center', height: isCopy ? '100%' : 'auto', width: '100%' }}
                   onClick={() => window.open(`${payment.slipUrl.startsWith('http') ? payment.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + payment.slipUrl}`, '_blank')}
                   title="คลิกเพื่อดูรูปภาพขนาดเต็ม"
                 >
                   <img 
                     src={`${payment.slipUrl.startsWith('http') ? payment.slipUrl : (import.meta.env.VITE_API_URL || 'http://localhost:3001') + payment.slipUrl}`} 
                     alt="Payment Slip" 
-                    style={{ maxWidth: '100%', maxHeight: isCopy ? '230px' : '400px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #E5E7EB', display: 'block' }} 
+                    style={{ maxWidth: '100%', maxHeight: isCopy ? '100%' : '400px', height: isCopy ? '100%' : 'auto', objectFit: 'contain', borderRadius: '8px', border: '1px solid #E5E7EB', display: 'block', boxSizing: 'border-box' }} 
                   />
                   <div className="slip-image-overlay" style={{
                     position: 'absolute',
