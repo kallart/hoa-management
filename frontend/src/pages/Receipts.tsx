@@ -63,7 +63,12 @@ const Receipts = () => {
   const getStatusBadge = (status: string) => {
     let bgColor = 'var(--color-success)';
     if (status === 'ชำระบางส่วน' || status === 'partial') bgColor = '#8B5CF6';
-    return <span style={{ backgroundColor: bgColor, color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{status}</span>;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bgColor }} />
+        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-main)' }}>{status}</span>
+      </div>
+    );
   };
 
   const filtered = payments.filter(p => 
@@ -161,9 +166,10 @@ const Receipts = () => {
                   <td style={{ padding: '12px 10px' }}>
                     <button 
                       onClick={() => setViewReceiptId(p.id)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', borderRadius: '6px', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '0.85rem' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', borderRadius: '6px', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '0.85rem' }}
+                      title="พิมพ์ใบเสร็จ"
                     >
-                      <Printer size={16} /> พิมพ์
+                      <Printer size={16} />
                     </button>
                   </td>
                   <td style={{ padding: '12px 10px', textAlign: 'center' }}>
