@@ -68,17 +68,7 @@ const MainLayout = () => {
           </li>
         </ul>
 
-        <div className="nav-links" style={{ paddingBottom: '20px', flex: 'none' }}>
-          {isAdmin && (
-            <div className="nav-item" style={{ marginTop: '20px' }} onClick={closeMenu}>
-              <Settings size={20} />
-              <span>ตั้งค่าระบบ</span>
-            </div>
-          )}
-          <div className="nav-item" style={{ color: 'var(--color-danger)', cursor: 'pointer', justifyContent: 'center' }} onClick={handleLogout} title="ออกจากระบบ">
-            <LogOut size={20} />
-          </div>
-        </div>
+
       </aside>
 
       {/* Main Content */}
