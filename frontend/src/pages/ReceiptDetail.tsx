@@ -500,16 +500,18 @@ const ReceiptDetail = () => {
             )}
 
             {/* Footer: Signatures instead of QR Code */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', padding: '0 40px', marginBottom: '40px' }}>
-              <div style={{ flex: 1 }}>
-                {/* Removed Payer Signature */}
+            {!isCopy && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', padding: '0 40px', marginBottom: '40px' }}>
+                <div style={{ flex: 1 }}>
+                  {/* Removed Payer Signature */}
+                </div>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <p style={{ margin: '0 0 9px 0', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>ลงชื่อ ....................................................... ผู้ออกใบเสร็จ</p>
+                  <p style={{ margin: '0 0 4px 0', fontSize: '0.95rem' }}>(คุณนงพงา เลิศธรรมจินดา)</p>
+                  <p style={{ margin: 0, fontSize: '0.95rem' }}>ฝ่ายการเงิน</p>
+                </div>
               </div>
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <p style={{ margin: '0 0 9px 0', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>ลงชื่อ ....................................................... ผู้ออกใบเสร็จ</p>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.95rem' }}>(คุณนงพงา เลิศธรรมจินดา)</p>
-                <p style={{ margin: 0, fontSize: '0.95rem' }}>ฝ่ายการเงิน</p>
-              </div>
-            </div>
+            )}
 
             {/* Attached Slip Image */}
             {payment.slipUrl && (
