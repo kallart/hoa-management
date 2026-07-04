@@ -75,9 +75,8 @@ const MainLayout = () => {
               <span>ตั้งค่าระบบ</span>
             </div>
           )}
-          <div className="nav-item" style={{ color: 'var(--color-danger)', cursor: 'pointer' }} onClick={handleLogout}>
+          <div className="nav-item" style={{ color: 'var(--color-danger)', cursor: 'pointer', justifyContent: 'center' }} onClick={handleLogout} title="ออกจากระบบ">
             <LogOut size={20} />
-            <span>ออกจากระบบ</span>
           </div>
         </div>
       </aside>
@@ -98,9 +97,10 @@ const MainLayout = () => {
             </div>
             <button 
               onClick={handleLogout} 
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', borderRadius: '6px', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', borderRadius: '6px', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}
+              title="ออกจากระบบ"
             >
-              <LogOut size={16} /> ออกจากระบบ
+              <LogOut size={18} />
             </button>
           </div>
         </header>
