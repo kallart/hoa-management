@@ -193,6 +193,9 @@ const Payments = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
             {['', 'รอแจ้งค่าส่วนกลาง', 'รอการชำระ', 'ชำระบางส่วน', 'รอตรวจสอบยอดเงิน', 'ชำระเต็มจำนวน'].map(status => {
+              const count = getTabCount(status);
+              if (count === 0 && status !== '') return null;
+
               const isActive = statusFilter === status;
               let statusColor = 'var(--color-primary)';
               if (status === 'รอแจ้งค่าส่วนกลาง') statusColor = '#9CA3AF';
@@ -218,7 +221,7 @@ const Payments = () => {
                   
                 }}
               >
-                {status || 'ทั้งหมด'} ({getTabCount(status)})
+                {status || 'ทั้งหมด'} ({count})
               </button>
             )})}
           </div>
