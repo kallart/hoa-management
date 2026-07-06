@@ -143,17 +143,35 @@ const Payments = () => {
     }
   };
 
+
+  const checkStatusMatch = (inv: any, status: string) => {
+    if (status === '') return true;
+    if (inv.status === status) return true;
+    if (status === 'รอแจ้งค่าส่วนกลาง' && inv.status === 'unpaid') return true;
+    if (status === 'รอการชำระ' && inv.status === 'overdue') return true;
+    if (status === 'ชำระบางส่วน' && inv.status === 'ชำระบางส่วน') return true;
+    if (status === 'รอตรวจสอบยอดเงิน' && inv.status === 'partial') return true;
+    if (status === 'ชำระเต็มจำนวน' && (inv.status === 'paid' || inv.status === 'ชำระแล้ว' || inv.status === 'ออกใบเสร็จแล้ว' || inv.status === 'ชำระเต็มจำนวน')) return true;
+    return false;
+  };
+
   const filteredInvoices = invoices.filter(inv => 
-    (inv.invoiceNumber.includes(searchTerm) || 
-    inv.property.houseNumber.includes(searchTerm) ||
-    (inv.property.owner?.name && inv.property.owner.name.includes(searchTerm))) &&
-    (statusFilter === '' || inv.status === statusFilter || 
-      (statusFilter === 'รอแจ้งค่าส่วนกลาง' && inv.status === 'unpaid') ||
-      (statusFilter === 'รอการชำระ' && inv.status === 'overdue') ||
-      (statusFilter === 'ชำระบางส่วน' && inv.status === 'ชำระบางส่วน') ||
-      (statusFilter === 'รอตรวจสอบยอดเงิน' && inv.status === 'partial') ||
-      (statusFilter === 'ชำระเต็มจำนวน' && (inv.status === 'paid' || inv.status === 'ชำระแล้ว' || inv.status === 'ออกใบเสร็จแล้ว' || inv.status === 'ชำระเต็มจำนวน')))
+    (searchTerm === '' || 
+      inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      inv.property.houseNumber.includes(searchTerm) || 
+      (inv.property.owner?.name && inv.property.owner.name.includes(searchTerm))) &&
+    checkStatusMatch(inv, statusFilter)
   );
+
+  const getTabCount = (status: string) => {
+    return invoices.filter(inv => 
+      (searchTerm === '' || 
+        inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        inv.property.houseNumber.includes(searchTerm) || 
+        (inv.property.owner?.name && inv.property.owner.name.includes(searchTerm))) &&
+      checkStatusMatch(inv, status)
+    ).length;
+  };
 
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
@@ -200,7 +218,7 @@ const Payments = () => {
                   
                 }}
               >
-                {status || 'ทั้งหมด'}
+                {status || 'ทั้งหมด'} ({getTabCount(status)})
               </button>
             )})}
           </div>

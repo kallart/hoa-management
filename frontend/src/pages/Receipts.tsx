@@ -70,15 +70,31 @@ const Receipts = () => {
     );
   };
 
+  const checkStatusMatch = (p: any, status: string) => {
+    if (status === '') return true;
+    if (p.invoice.status === status) return true;
+    if (status === 'ชำระบางส่วน' && p.invoice.status === 'ชำระบางส่วน') return true;
+    if (status === 'ชำระเต็มจำนวน' && (p.invoice.status === 'paid' || p.invoice.status === 'ชำระแล้ว' || p.invoice.status === 'ออกใบเสร็จแล้ว' || p.invoice.status === 'ชำระเต็มจำนวน')) return true;
+    return false;
+  };
+
   const filtered = payments.filter(p => 
     ((p.receiptNumber && p.receiptNumber.includes(searchTerm)) ||
     p.invoice.invoiceNumber.includes(searchTerm) || 
     p.invoice.property.houseNumber.includes(searchTerm) ||
     (p.invoice.property.owner?.name && p.invoice.property.owner.name.includes(searchTerm))) &&
-    (statusFilter === '' || p.invoice.status === statusFilter || 
-      (statusFilter === 'ชำระบางส่วน' && p.invoice.status === 'ชำระบางส่วน') ||
-      (statusFilter === 'ชำระเต็มจำนวน' && (p.invoice.status === 'paid' || p.invoice.status === 'ชำระแล้ว' || p.invoice.status === 'ออกใบเสร็จแล้ว' || p.invoice.status === 'ชำระเต็มจำนวน')))
+    checkStatusMatch(p, statusFilter)
   );
+
+  const getTabCount = (status: string) => {
+    return payments.filter(p => 
+      ((p.receiptNumber && p.receiptNumber.includes(searchTerm)) ||
+      p.invoice.invoiceNumber.includes(searchTerm) || 
+      p.invoice.property.houseNumber.includes(searchTerm) ||
+      (p.invoice.property.owner?.name && p.invoice.property.owner.name.includes(searchTerm))) &&
+      checkStatusMatch(p, status)
+    ).length;
+  };
 
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
@@ -125,7 +141,7 @@ const Receipts = () => {
                   
                 }}
               >
-                {status || 'ทั้งหมด'}
+                {status || 'ทั้งหมด'} ({getTabCount(status)})
               </button>
             )})}
           </div>
