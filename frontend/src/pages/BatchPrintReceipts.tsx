@@ -112,8 +112,10 @@ const BatchPrintReceipts = () => {
 
         {payments.map((payment, index) => {
           try {
-            const invoice = payment.invoice;
+  
 
+  
+  const invoice = payment.invoice;
   const isFullPayment = !payment.receiptNumber?.includes('-PM');
   let remainingBalance = invoice.amount - payment.amount;
   if (!isFullPayment && allPayments.length > 0) {
@@ -129,13 +131,12 @@ const BatchPrintReceipts = () => {
     remainingBalance = invoice.amount - totalPaidUpToThis;
   }
 
-  
+  const previousPayments = allPayments
+    .filter(p => p.invoice?.invoiceNumber === invoice.invoiceNumber && new Date(p.createdAt).getTime() < new Date(payment.createdAt).getTime())
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-  
-
-  
-
-  const today = new Date(payment.updatedAt || new Date()).toLocaleDateString('th-TH', { 
+  const today = new Date(payment.updatedAt || new Date()).toLocaleDateString('th-TH', {
+ 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
