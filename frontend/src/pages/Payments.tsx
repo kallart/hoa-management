@@ -220,9 +220,9 @@ const Payments = () => {
                   transition: 'all 0.2s ease',
                   
                 }}
-              >
-                {status || 'ทั้งหมด'} ({count})
-              </button>
+                >
+                  {status === '' ? 'ทั้งหมด' : status}
+                </button>
             )})}
           </div>
         </div>
