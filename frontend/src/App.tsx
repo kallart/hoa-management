@@ -6,6 +6,7 @@ import Properties from './pages/Properties';
 import Invoices from './pages/Invoices';
 import InvoiceDetail from './pages/InvoiceDetail';
 import BatchPrintInvoices from './pages/BatchPrintInvoices';
+import BatchPrintReceipts from './pages/BatchPrintReceipts';
 import Payments from './pages/Payments';
 import ReceiptDetail from './pages/ReceiptDetail';
 import Receipts from './pages/Receipts';
@@ -42,6 +43,7 @@ function App() {
           </Route>
           {/* Standalone print pages */}
           <Route path="/invoices/batch-print" element={<PrivateRoute><BatchPrintInvoices /></PrivateRoute>} />
+          <Route path="/receipts/batch-print" element={<PrivateRoute><BatchPrintReceipts /></PrivateRoute>} />
           <Route path="/invoices/:id" element={<PrivateRoute><InvoiceDetail /></PrivateRoute>} />
           <Route path="/receipts/:id" element={<PrivateRoute><ReceiptDetail /></PrivateRoute>} />
         </Routes>

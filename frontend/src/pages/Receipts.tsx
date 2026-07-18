@@ -96,6 +96,20 @@ const Receipts = () => {
     ).length;
   };
 
+  const handleBatchPrint = () => {
+    const unprintedIds = filtered
+      .filter(p => p.receiptNumber && !printedReceipts.has(p.receiptNumber))
+      .map(p => p.id);
+      
+    if (unprintedIds.length === 0) {
+      alert('ไม่มีใบเสร็จที่ยังไม่ได้ปริ้นท์ในรายการปัจจุบัน');
+      return;
+    }
+    
+    localStorage.setItem('batchPrintReceipts', JSON.stringify(unprintedIds));
+    window.open('/receipts/batch-print', '_blank');
+  };
+
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
       <div className="flex-between" style={{ marginBottom: '20px', flexShrink: 0 }}>
@@ -106,45 +120,51 @@ const Receipts = () => {
       </div>
 
       <div style={{ backgroundColor: 'var(--color-surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--color-border)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <div style={{ marginBottom: '20px', flexShrink: 0, display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', width: '300px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-main)' }} />
-            <input 
-              type="text" 
-              placeholder="ค้นหาเลขที่ใบเสร็จ, บ้านเลขที่..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid var(--color-border)', outline: 'none' }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
-            {['', 'ชำระบางส่วน', 'ชำระเต็มจำนวน'].map(status => {
-              const isActive = statusFilter === status;
-              let statusColor = 'var(--color-primary)';
-              if (status === 'ชำระบางส่วน') statusColor = '#8B5CF6';
-              if (status === 'ชำระเต็มจำนวน') statusColor = 'var(--color-success)';
+        <div style={{ marginBottom: '20px', flexShrink: 0, display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-main)' }} />
+              <input 
+                type="text" 
+                placeholder="ค้นหาเลขที่ใบเสร็จ, บ้านเลขที่..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid var(--color-border)', outline: 'none' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
+              {['', 'ชำระบางส่วน', 'ชำระเต็มจำนวน'].map(status => {
+                const isActive = statusFilter === status;
+                let statusColor = 'var(--color-primary)';
+                if (status === 'ชำระบางส่วน') statusColor = '#8B5CF6';
+                if (status === 'ชำระเต็มจำนวน') statusColor = 'var(--color-success)';
 
-              return (
-              <button 
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                style={{ 
-                  padding: '4px 12px', fontSize: '0.85rem', 
-                  borderRadius: '20px', 
-                  border: `1px solid ${isActive ? statusColor : 'var(--color-border)'}`, 
-                  backgroundColor: isActive ? statusColor : 'white', 
-                  color: isActive ? 'white' : 'var(--color-text-main)',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease',
-                  
-                }}
-              >
-                {status || 'ทั้งหมด'} ({getTabCount(status)})
-              </button>
-            )})}
+                return (
+                <button 
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  style={{ 
+                    padding: '4px 12px', fontSize: '0.85rem', 
+                    borderRadius: '20px', 
+                    border: `1px solid ${isActive ? statusColor : 'var(--color-border)'}`, 
+                    backgroundColor: isActive ? statusColor : 'white', 
+                    color: isActive ? 'white' : 'var(--color-text-main)',
+                    fontWeight: isActive ? 'bold' : 'normal',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease',
+                    
+                  }}
+                >
+                  {status || 'ทั้งหมด'} ({getTabCount(status)})
+                </button>
+              )})}
+            </div>
           </div>
+          
+          <button onClick={handleBatchPrint} style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+            <Printer size={18} /> ปริ้นท์ทุกใบ
+          </button>
         </div>
 
         <div className="table-responsive" style={{ flex: 1 }}>
