@@ -42,6 +42,8 @@ const BatchPrintReceipts = () => {
   const [payments, setPayments] = useState<PaymentDetailType[]>([]);
   const [allPayments, setAllPayments] = useState<PaymentDetailType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCopy, setIsCopy] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const fetchBatch = async () => {
@@ -109,6 +111,7 @@ const BatchPrintReceipts = () => {
         </div>
 
         {payments.map((payment, index) => {
+          try {
             const invoice = payment.invoice;
 
   const isFullPayment = !payment.receiptNumber?.includes('-PM');
@@ -416,6 +419,17 @@ const BatchPrintReceipts = () => {
           </div>
             </div>
           );
+
+          } catch (e) {
+            return (
+              <div key={payment.id} className="page-break" style={{ padding: '20px', color: 'red', backgroundColor: '#fee2e2', border: '1px solid #ef4444', margin: '20px' }}>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 'bold' }}>Error rendering payment {payment.id}</h3>
+                <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '14px', margin: 0 }}>
+                  {e instanceof Error ? e.message + '\n' + e.stack : String(e)}
+                </pre>
+              </div>
+            );
+          }
         })}
       </div>
     </>
