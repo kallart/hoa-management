@@ -40,6 +40,7 @@ interface PaymentDetailType {
 
 const BatchPrintReceipts = () => {
   const [payments, setPayments] = useState<PaymentDetailType[]>([]);
+  const [allPayments, setAllPayments] = useState<PaymentDetailType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ const BatchPrintReceipts = () => {
         if (savedIds) {
           const idsToPrint = JSON.parse(savedIds);
           const response = await api.get('/api/payments');
+          setAllPayments(response.data);
           const receiptsOnly = response.data.filter((p: PaymentDetailType) => idsToPrint.includes(p.id));
           setPayments(receiptsOnly);
         }
