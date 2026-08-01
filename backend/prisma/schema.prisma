@@ -29,9 +29,10 @@ model Property {
   id          String    @id @default(uuid())
   houseNumber String    @unique
   plot        String?
-  landArea    Float
-  ratePerYear Float
-  status      String    @default("active")
+  landArea       Float
+  ratePerYear    Float
+  chargeInterest Boolean   @default(true)
+  status         String    @default("active")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   invoices    Invoice[]
@@ -56,9 +57,10 @@ model Invoice {
   fiscalYear    Int
   propertyId    String
   amount        Float
-  arrears       Float     @default(0)
-  interest      Float     @default(0)
-  commonFee     Float     @default(0)
+  arrears          Float     @default(0)
+  interest         Float     @default(0)
+  isInterestWaived Boolean   @default(false)
+  commonFee        Float     @default(0)
   parkingFee    Float     @default(0)
   dueDate       DateTime
   status        String    @default("รอแจ้งค่าส่วนกลาง")

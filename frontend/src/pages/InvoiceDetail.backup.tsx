@@ -12,6 +12,7 @@ interface InvoiceDetailType {
   amount: number;
   arrears: number;
   interest: number;
+  isInterestWaived?: boolean;
   commonFee: number;
   parkingFee: number;
   dueDate: string;
@@ -142,7 +143,7 @@ const InvoiceDetail = () => {
       subtext: '',
       area: '',
       rate: '',
-      amount: invoice.interest > 0 ? invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''
+      amount: invoice.interest > 0 ? (invoice.isInterestWaived ? '0.00' : invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) : ''
     },
     {
       name: invoice.parkingFee > 0 ? `ค่าที่จอดรถส่วนกลาง ( ก.ค. ${shortYear} - มิ.ย. ${nextShortYear})` : '',

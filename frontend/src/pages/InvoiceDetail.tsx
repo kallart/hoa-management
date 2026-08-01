@@ -12,6 +12,7 @@ interface InvoiceDetailType {
   amount: number;
   arrears: number;
   interest: number;
+  isInterestWaived?: boolean;
   commonFee: number;
   parkingFee: number;
   dueDate: string;
@@ -123,11 +124,11 @@ const InvoiceDetail = () => {
       amount: invoice.arrears > 0 ? invoice.arrears.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''
     },
     {
-      name: invoice.interest > 0 ? 'ดอกเบี้ยยอดค้างชำระ' : '',
+      name: invoice.interest > 0 ? (invoice.isInterestWaived ? 'ดอกเบี้ยยอดค้างชำระ (ได้รับการยกเว้น)' : 'ดอกเบี้ยยอดค้างชำระ') : '',
       subtext: invoice.interest > 0 ? `${invoice.arrears.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} x 2% x 12` : '',
       area: '',
       rate: '',
-      amount: invoice.interest > 0 ? invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''
+      amount: invoice.interest > 0 ? (invoice.isInterestWaived ? '0.00' : invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) : ''
     },
     {
       name: invoice.parkingFee > 0 ? 'ค่าที่จอดรถส่วนกลาง' : '',

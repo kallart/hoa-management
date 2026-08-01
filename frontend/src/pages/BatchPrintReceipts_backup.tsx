@@ -18,6 +18,7 @@ interface PaymentDetailType {
     amount: number;
     arrears: number;
     interest: number;
+  isInterestWaived?: boolean;
     commonFee: number;
     parkingFee: number;
     dueDate: string;
@@ -132,7 +133,7 @@ const BatchPrintReceipts = () => {
               subtext: '',
               area: '',
               rate: '',
-              amount: invoice.interest > 0 ? invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''
+              amount: invoice.interest > 0 ? (invoice.isInterestWaived ? '0.00' : invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) : ''
             },
             {
               name: invoice.parkingFee > 0 ? 'ค่าที่จอดรถส่วนกลาง' : '',
@@ -237,7 +238,7 @@ const BatchPrintReceipts = () => {
   const validItems = [];
   if (invoice.commonFee > 0) validItems.push({ name: `ค่าส่วนกลาง ก.ค.${shortYear} - มิ.ย.${nextShortYear}`, amount: invoice.commonFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) });
   if (invoice.arrears > 0) validItems.push({ name: 'ค้างชำระจากปีก่อน', amount: invoice.arrears.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) });
-  if (invoice.interest > 0) validItems.push({ name: 'ดอกเบี้ยค้างชำระ', amount: invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) });
+  if (invoice.interest > 0) validItems.push({ name: invoice.isInterestWaived ? 'ดอกเบี้ยค้างชำระ (ได้รับการยกเว้น)' : 'ดอกเบี้ยค้างชำระ', amount: invoice.isInterestWaived ? '0.00' : invoice.interest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) });
   if (invoice.parkingFee > 0) validItems.push({ name: 'ค่าที่จอดรถ', amount: invoice.parkingFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) });
 
   const invoiceItemsFixed: any[] = [

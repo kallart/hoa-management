@@ -12,6 +12,7 @@ interface Property {
   plot?: string;
   landArea: number;
   ratePerYear: number;
+  chargeInterest?: boolean;
   status: string;
   owner?: {
     name: string;
@@ -35,7 +36,7 @@ const Properties = () => {
   const { isAdmin } = useAuth();
   const [statusFilter, setStatusFilter] = useState('');
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [editForm, setEditForm] = useState({ ownerName: '', plot: '', landArea: '', parkingFee: '', arrears: '' });
+  const [editForm, setEditForm] = useState({ ownerName: '', plot: '', landArea: '', parkingFee: '', arrears: '', chargeInterest: true });
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchProperties = async () => {
@@ -64,7 +65,8 @@ const Properties = () => {
       plot: property.plot || '',
       landArea: property.landArea.toString(),
       parkingFee: invoice ? invoice.parkingFee.toString() : '0',
-      arrears: invoice ? invoice.arrears.toString() : '0'
+      arrears: invoice ? invoice.arrears.toString() : '0',
+      chargeInterest: property.chargeInterest !== undefined ? property.chargeInterest : true
     });
   };
 
@@ -342,6 +344,18 @@ const Properties = () => {
             </div>
 
             <div style={{ marginBottom: '25px', backgroundColor: '#F3F4F6', padding: '10px', borderRadius: '8px', border: '1px dashed #D1D5DB' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                <input 
+                  type="checkbox" 
+                  id="chargeInterestCheckbox"
+                  checked={editForm.chargeInterest !== false}
+                  onChange={(e) => setEditForm({...editForm, chargeInterest: e.target.checked})}
+                  style={{ marginRight: '8px', width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <label htmlFor="chargeInterestCheckbox" style={{ fontWeight: 'bold', color: '#4B5563', cursor: 'pointer' }}>
+                  คิดดอกเบี้ยล่าช้า
+                </label>
+              </div>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#4B5563' }}>ดอกเบี้ยคำนวณอัตโนมัติ (บาท)</label>
               <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-danger)' }}>
                 {((Number(editForm.arrears) || 0) * 0.02 * 12).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
