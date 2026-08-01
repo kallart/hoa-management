@@ -217,19 +217,6 @@ app.get('/api/dashboard', async (req, res) => {
       };
     };
 
-    const statusCounts = {
-      'รอแจ้งค่าส่วนกลาง': calcStatus(['รอแจ้งค่าส่วนกลาง', 'unpaid']),
-      'รอการชำระ': calcStatus(['รอการชำระ', 'overdue']),
-      'ชำระบางส่วน': calcStatus(['ชำระบางส่วน']),
-      'รอตรวจสอบยอดเงิน': calcStatus(['รอตรวจสอบยอดเงิน', 'partial']),
-      'ชำระเต็มจำนวน': calcStatus(['ชำระเต็มจำนวน', 'ออกใบเสร็จแล้ว', 'paid', 'ชำระแล้ว']),
-    };
-
-        where: { id: invoice.id },
-        data: {
-          commonFee: newCommonFee,
-          parkingFee: updatedParkingFee,
-          arrears: updatedArrears,
           interest: calculatedInterest,
           amount: newAmount
         }
