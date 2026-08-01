@@ -68,12 +68,12 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await prisma.user.findUnique({ where: { username } });
     
     if (!user) {
-      return res.status(401).json({ error: 'เธเธทเนเธญเธเธนเนเนเธเนเธซเธฃเธทเธญเธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ–เธนเธเธ•เนเธญเธ' });
+      return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return res.status(401).json({ error: 'เธเธทเนเธญเธเธนเนเนเธเนเธซเธฃเธทเธญเธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ–เธนเธเธ•เนเธญเธ' });
+      return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
     }
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
@@ -198,7 +198,7 @@ app.get('/api/dashboard', async (req, res) => {
         const unpaidInPeriod = invoices
           .filter(inv => {
             const d = new Date(inv.dueDate);
-            return d >= m.start && d <= m.end && inv.status !== 'เธญเธญเธเนเธเน€เธชเธฃเนเธเนเธฅเนเธง' && inv.status !== 'เธเธณเธฃเธฐเน€เธ•เนเธกเธเธณเธเธงเธ' && inv.status !== 'เธเธณเธฃเธฐเนเธฅเนเธง';
+            return d >= m.start && d <= m.end && inv.status !== 'ออกใบเสร็จแล้ว' && inv.status !== 'ชำระเต็มจำนวน' && inv.status !== 'ชำระแล้ว';
           })
           .reduce((sum, inv) => sum + inv.amount, 0);
   
@@ -300,7 +300,7 @@ app.put('/api/properties/:id', requireAdmin, async (req, res) => {
       });
     }
 
-    await addLog('เนเธเนเนเธเธเนเธญเธกเธนเธฅเธเนเธฒเธ', `เธญเธฑเธเน€เธ”เธ•เธเนเธญเธกเธนเธฅเนเธฅเธฐเธฅเธ”เธขเธญเธ”/เน€เธเธดเนเธกเธขเธญเธ”เธชเธณเธซเธฃเธฑเธเธเนเธฒเธเน€เธฅเธเธ—เธตเน ${property.houseNumber}`, property.houseNumber);
+    await addLog('แก้ไขข้อมูลบ้าน', `อัปเดตข้อมูลและลดยอด/เพิ่มยอดสำหรับบ้านเลขที่ ${property.houseNumber}`, property.houseNumber);
 
     res.json(property);
   } catch (error) {
@@ -399,7 +399,7 @@ app.delete('/api/payments/:id', requireAdmin, async (req, res) => {
       where: { id: req.params.id }
     });
 
-    await addLog('เธขเธเน€เธฅเธดเธเธฃเธฒเธขเธเธฒเธฃ', `เธขเธเน€เธฅเธดเธเธฃเธฒเธขเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธเธขเธญเธ” ${Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} เธเธฒเธ—`, payment.invoice?.property?.houseNumber);
+    await addLog('ยกเลิกรายการ', `ยกเลิกรายการชำระเงินยอด ${Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`, payment.invoice?.property?.houseNumber);
 
     // Check remaining payments and update status
     const remainingPayments = await prisma.payment.findMany({
@@ -409,12 +409,12 @@ app.delete('/api/payments/:id', requireAdmin, async (req, res) => {
     if (remainingPayments.length > 0) {
       await prisma.invoice.update({
         where: { id: payment.invoiceId },
-        data: { status: 'เธเธณเธฃเธฐเธเธฒเธเธชเนเธงเธ' }
+        data: { status: 'ชำระบางส่วน' }
       });
     } else {
       await prisma.invoice.update({
         where: { id: payment.invoiceId },
-        data: { status: 'เธฃเธญเธเธฒเธฃเธเธณเธฃเธฐ' }
+        data: { status: 'รอการชำระ' }
       });
     }
 
@@ -467,10 +467,10 @@ app.post('/api/payments', upload.single('slip'), requireAdmin, async (req, res) 
     // Update invoice status
     await prisma.invoice.update({
       where: { id: invoiceId },
-      data: { status: 'เธฃเธญเธ•เธฃเธงเธเธชเธญเธเธขเธญเธ”เน€เธเธดเธ' }
+      data: { status: 'รอตรวจสอบยอดเงิน' }
     });
 
-    await addLog('เนเธเนเธเธเธณเธฃเธฐเน€เธเธดเธ', `เนเธเธเธชเธฅเธดเธเธขเธญเธ” ${Number(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} เธเธฒเธ—`, houseNumber);
+    await addLog('แจ้งชำระเงิน', `แนบสลิปยอด ${Number(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`, houseNumber);
 
     res.json(payment);
   } catch (error) {
@@ -537,13 +537,13 @@ app.post('/api/payments/:id/verify', requireAdmin, async (req, res) => {
     });
 
     // Update Invoice Status based on total paid amount
-    const newInvoiceStatus = roundedTotalPaid >= roundedInvoiceAmount ? 'เธเธณเธฃเธฐเน€เธ•เนเธกเธเธณเธเธงเธ' : 'เธเธณเธฃเธฐเธเธฒเธเธชเนเธงเธ';
+    const newInvoiceStatus = roundedTotalPaid >= roundedInvoiceAmount ? 'ชำระเต็มจำนวน' : 'ชำระบางส่วน';
     await prisma.invoice.update({
       where: { id: payment.invoiceId },
       data: { status: newInvoiceStatus }
     });
 
-    await addLog('เธญเธญเธเนเธเน€เธชเธฃเนเธ', `เธ•เธฃเธงเธเธชเธญเธเธขเธญเธ”เนเธฅเธฐเธญเธญเธเนเธเน€เธชเธฃเนเธ ${receiptNumber} เธขเธญเธ” ${Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} เธเธฒเธ—`, payment.invoice?.property?.houseNumber);
+    await addLog('ออกใบเสร็จ', `ตรวจสอบยอดและออกใบเสร็จ ${receiptNumber} ยอด ${Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`, payment.invoice?.property?.houseNumber);
 
     res.json(updatedPayment);
   } catch (error) {
