@@ -66,6 +66,7 @@ const Properties = () => {
       landArea: property.landArea.toString(),
       parkingFee: invoice ? invoice.parkingFee.toString() : '0',
       arrears: invoice ? invoice.arrears.toString() : '0',
+      chargeInterest: property.chargeInterest !== undefined ? property.chargeInterest : true,
       chargeInterest: property.chargeInterest !== undefined ? property.chargeInterest : true
     });
   };

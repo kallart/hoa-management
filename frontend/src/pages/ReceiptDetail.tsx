@@ -19,6 +19,7 @@ interface PaymentDetailType {
     arrears: number;
     interest: number;
   isInterestWaived?: boolean;
+  isInterestWaived?: boolean;
     commonFee: number;
     parkingFee: number;
     dueDate: string;
