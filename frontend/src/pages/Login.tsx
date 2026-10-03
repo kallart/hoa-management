@@ -21,7 +21,8 @@ const Login = () => {
       login(response.data.token, response.data.user);
       toast.success('เข้าสู่ระบบสำเร็จ');
       navigate('/home');
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as any;
       if (error.response?.status === 500 || error.response?.status === 502 || error.response?.status === 504) {
         toast.error('ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบการตั้งค่า (Environment Variables)');
       } else {
