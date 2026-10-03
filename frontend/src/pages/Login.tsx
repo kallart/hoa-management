@@ -22,7 +22,11 @@ const Login = () => {
       toast.success('เข้าสู่ระบบสำเร็จ');
       navigate('/home');
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      if (error.response?.status === 500 || error.response?.status === 502 || error.response?.status === 504) {
+        toast.error('ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบการตั้งค่า (Environment Variables)');
+      } else {
+        toast.error(error.response?.data?.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      }
     } finally {
       setLoading(false);
     }
