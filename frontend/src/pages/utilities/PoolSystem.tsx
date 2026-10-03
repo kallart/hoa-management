@@ -170,11 +170,11 @@ const PoolSystem: React.FC = () => {
           <table className="table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F9FAFB', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
               <tr>
-                <th style={{ padding: '16px 24px', borderBottom: 'none' }}>วันที่</th>
-                <th style={{ padding: '16px 24px', borderBottom: 'none' }}>คลอรีน (Cl)</th>
-                <th style={{ padding: '16px 24px', borderBottom: 'none' }}>ความเป็นกรดด่าง (pH)</th>
-                <th style={{ padding: '16px 24px', borderBottom: 'none' }}>เกลือ (Salt)</th>
-                <th style={{ padding: '16px 24px', borderBottom: 'none' }}>หมายเหตุ</th>
+                <th>วันที่</th>
+                <th>คลอรีน (Cl)</th>
+                <th>ความเป็นกรดด่าง (pH)</th>
+                <th>เกลือ (Salt)</th>
+                <th>หมายเหตุ</th>
               </tr>
             </thead>
             <tbody>
