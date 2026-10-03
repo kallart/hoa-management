@@ -57,7 +57,7 @@ const Home: React.FC = () => {
 
           {/* Option 2: Public Utilities System */}
           <div 
-            onClick={() => alert('ระบบกำลังอยู่ระหว่างการพัฒนา (Coming Soon)')}
+            onClick={() => navigate('/utilities')}
             style={{ width: '320px', backgroundColor: 'white', padding: '40px 30px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s, boxShadow 0.2s', borderTop: '5px solid #F59E0B' }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px)'; e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'; }}
@@ -67,7 +67,6 @@ const Home: React.FC = () => {
             </div>
             <h3 style={{ fontSize: '1.4rem', color: '#1F2937', margin: '0 0 15px 0', textAlign: 'center' }}>งานระบบสาธารณูปโภค</h3>
             <p style={{ color: '#6B7280', textAlign: 'center', margin: 0, lineHeight: '1.5' }}>จัดการแจ้งซ่อมบำรุง, ดูแลพื้นที่ส่วนกลาง และระบบสาธารณูปโภค</p>
-            <span style={{ marginTop: '20px', padding: '5px 15px', backgroundColor: '#F3F4F6', color: '#4B5563', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>Coming Soon</span>
           </div>
 
           {/* Option 3: Committee Meeting System */}

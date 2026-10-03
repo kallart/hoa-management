@@ -13,6 +13,9 @@ import Receipts from './pages/Receipts';
 import ActivityLogs from './pages/ActivityLogs';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import UtilitiesLayout from './layouts/UtilitiesLayout';
+import UtilitiesDashboard from './pages/utilities/UtilitiesDashboard';
+import DummyPage from './pages/utilities/DummyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -34,6 +37,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
           
+          {/* Common Fee System */}
           <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
             <Route index element={<Navigate to="/home" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
@@ -43,6 +47,17 @@ function App() {
             <Route path="receipts" element={<Receipts />} />
             <Route path="logs" element={<ActivityLogs />} />
           </Route>
+          
+          {/* Utilities System */}
+          <Route path="/utilities" element={<PrivateRoute><UtilitiesLayout /></PrivateRoute>}>
+            <Route index element={<Navigate to="/utilities/dashboard" replace />} />
+            <Route path="dashboard" element={<UtilitiesDashboard />} />
+            <Route path="pool" element={<DummyPage />} />
+            <Route path="cctv" element={<DummyPage />} />
+            <Route path="maintenance" element={<DummyPage />} />
+            <Route path="settings" element={<DummyPage />} />
+          </Route>
+          
           {/* Standalone print pages */}
           <Route path="/invoices/batch-print" element={<PrivateRoute><BatchPrintInvoices /></PrivateRoute>} />
           <Route path="/receipts/batch-print" element={<PrivateRoute><BatchPrintReceipts /></PrivateRoute>} />
