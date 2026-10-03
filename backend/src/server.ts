@@ -565,6 +565,37 @@ app.get('/api/logs', async (req, res) => {
   }
 });
 
+// Pool Water Quality
+app.get('/api/pool-quality', async (req, res) => {
+  try {
+    const logs = await prisma.poolWaterQuality.findMany({
+      orderBy: { date: 'asc' }, // Ascending for charts
+      take: 30 // limit to last 30 days
+    });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch pool logs' });
+  }
+});
+
+app.post('/api/pool-quality', async (req, res) => {
+  try {
+    const { cl, ph, salt, notes, date } = req.body;
+    const log = await prisma.poolWaterQuality.create({
+      data: {
+        cl: parseFloat(cl),
+        ph: parseFloat(ph),
+        salt: parseFloat(salt),
+        notes: notes || '',
+        date: date ? new Date(date) : new Date()
+      }
+    });
+    res.json(log);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save pool log' });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

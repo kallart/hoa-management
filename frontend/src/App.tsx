@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import UtilitiesLayout from './layouts/UtilitiesLayout';
 import UtilitiesDashboard from './pages/utilities/UtilitiesDashboard';
+import PoolSystem from './pages/utilities/PoolSystem';
 import DummyPage from './pages/utilities/DummyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -52,7 +53,7 @@ function App() {
           <Route path="/utilities" element={<PrivateRoute><UtilitiesLayout /></PrivateRoute>}>
             <Route index element={<Navigate to="/utilities/dashboard" replace />} />
             <Route path="dashboard" element={<UtilitiesDashboard />} />
-            <Route path="pool" element={<DummyPage />} />
+            <Route path="pool" element={<PoolSystem />} />
             <Route path="cctv" element={<DummyPage />} />
             <Route path="maintenance" element={<DummyPage />} />
             <Route path="settings" element={<DummyPage />} />

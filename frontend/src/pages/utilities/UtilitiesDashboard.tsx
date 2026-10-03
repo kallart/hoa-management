@@ -1,7 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, Droplets, Camera, AlertTriangle } from 'lucide-react';
+import api from '../../utils/api';
 
 const UtilitiesDashboard: React.FC = () => {
+  const [latestPoolLog, setLatestPoolLog] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchPoolData = async () => {
+      try {
+        const response = await api.get('/api/pool-quality');
+        if (response.data && response.data.length > 0) {
+          setLatestPoolLog(response.data[response.data.length - 1]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch pool quality data');
+      }
+    };
+    fetchPoolData();
+  }, []);
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -16,7 +33,9 @@ const UtilitiesDashboard: React.FC = () => {
           </div>
           <div className="stat-content">
             <p className="stat-label">สถานะสระว่ายน้ำ</p>
-            <h3 className="stat-value" style={{ fontSize: '1.2rem', color: '#10B981' }}>ปกติ (เปิดให้บริการ)</h3>
+            <h3 className="stat-value" style={{ fontSize: '1.2rem', color: '#10B981' }}>
+              {latestPoolLog ? `pH: ${latestPoolLog.ph} / Cl: ${latestPoolLog.cl}` : 'ไม่มีข้อมูลล่าสุด'}
+            </h3>
           </div>
         </div>
 
