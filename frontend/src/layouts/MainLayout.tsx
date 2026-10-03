@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Users, FileText, Receipt, Printer, Settings, LogOut, History, Menu } from 'lucide-react';
+import { Home, Users, FileText, Receipt, Printer, Settings, LogOut, History, Menu, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const MainLayout = () => {
@@ -32,6 +32,12 @@ const MainLayout = () => {
         </div>
         
         <ul className="nav-links">
+          <li style={{ marginBottom: '15px' }}>
+            <NavLink to="/home" onClick={closeMenu} className={({isActive}) => isActive ? "nav-item active" : "nav-item"} style={{ backgroundColor: 'var(--color-primary-light)', color: 'white' }}>
+              <ArrowLeft size={20} />
+              <span>กลับหน้าหลัก (Home)</span>
+            </NavLink>
+          </li>
           <li>
             <NavLink to="/dashboard" onClick={closeMenu} className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <Home size={20} />
