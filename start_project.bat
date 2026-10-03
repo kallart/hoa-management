@@ -6,7 +6,7 @@ echo ===================================================
 echo.
 
 echo [1/2] Starting Backend Server (Port 5000)...
-start "HOA Backend Server" cmd /k "cd backend && npm run dev"
+start "HOA Backend API" cmd /k "cd frontend && npm run api"
 
 echo [2/2] Starting Frontend Server (Port 5173)...
 start "HOA Frontend Server" cmd /k "cd frontend && npm run dev"

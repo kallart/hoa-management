@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
@@ -7,6 +9,10 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 
@@ -596,7 +602,4 @@ app.post('/api/pool-quality', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+export default app;
