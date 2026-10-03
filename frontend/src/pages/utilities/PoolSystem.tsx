@@ -50,7 +50,7 @@ const PoolSystem: React.FC = () => {
 
   const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
 
-  // Calculate generic score based on ideal ranges (pH 7.2-7.6, Cl 1.0-3.0, Salt 2500-4000)
+  // Calculate generic score based on ideal ranges (pH 7.2-7.6, Cl 1.0-3.0, Salt 2.5-4.5 ppt)
   const calculateScore = (log: PoolLog | null) => {
     if (!log) return 0;
     let score = 100;
@@ -58,7 +58,7 @@ const PoolSystem: React.FC = () => {
     else if (log.ph < 7.2 || log.ph > 7.6) score -= 10;
     if (log.cl < 1.0 || log.cl > 4.0) score -= 20;
     else if (log.cl > 3.0) score -= 10;
-    if (log.salt < 2000 || log.salt > 4500) score -= 20;
+    if (log.salt < 2.0 || log.salt > 4.5) score -= 20;
     return Math.max(0, score);
   };
 
@@ -102,7 +102,7 @@ const PoolSystem: React.FC = () => {
           <p style={{ color: '#6B7280', margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: 'bold' }}>SALT (เกลือ)</p>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
             <Droplets size={24} color="#10B981" />
-            <h2 style={{ margin: 0, fontSize: '2rem', color: '#1F2937' }}>{latestLog?.salt || 0} <span style={{ fontSize: '1rem', color: '#6B7280', fontWeight: 'normal' }}>ppm</span></h2>
+            <h2 style={{ margin: 0, fontSize: '2rem', color: '#1F2937' }}>{latestLog?.salt || 0} <span style={{ fontSize: '1rem', color: '#6B7280', fontWeight: 'normal' }}>ppt</span></h2>
           </div>
         </div>
 
@@ -184,7 +184,7 @@ const PoolSystem: React.FC = () => {
                     <td>{new Date(log.date).toLocaleDateString('th-TH')}</td>
                     <td><span style={{ color: log.cl < 1 || log.cl > 3 ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{log.cl}</span> ppm</td>
                     <td><span style={{ color: log.ph < 7.2 || log.ph > 7.8 ? '#EF4444' : '#3B82F6', fontWeight: 'bold' }}>{log.ph}</span></td>
-                    <td>{log.salt} ppm</td>
+                    <td>{log.salt} ppt</td>
                     <td>{log.notes || '-'}</td>
                   </tr>
                 ))
@@ -238,11 +238,12 @@ const PoolSystem: React.FC = () => {
                 />
               </div>
               <div className="form-group">
-                <label>ค่าเกลือ (Salt - ppm)</label>
+                <label>ค่าเกลือ (Salt - ppt)</label>
                 <input 
                   type="number" 
+                  step="0.1"
                   className="form-control" 
-                  placeholder="เช่น 3000"
+                  placeholder="เช่น 3.0"
                   value={formData.salt}
                   onChange={(e) => setFormData({...formData, salt: e.target.value})}
                   required
