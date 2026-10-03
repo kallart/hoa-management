@@ -20,7 +20,7 @@ const Login = () => {
       const response = await api.post('/api/auth/login', { username, password });
       login(response.data.token, response.data.user);
       toast.success('เข้าสู่ระบบสำเร็จ');
-      navigate('/dashboard');
+      navigate('/home');
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
     } finally {

@@ -12,6 +12,7 @@ import ReceiptDetail from './pages/ReceiptDetail';
 import Receipts from './pages/Receipts';
 import ActivityLogs from './pages/ActivityLogs';
 import Login from './pages/Login';
+import Home from './pages/Home';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -31,9 +32,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
           
           <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route index element={<Navigate to="/home" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="properties" element={<Properties />} />
             <Route path="invoices" element={<Invoices />} />
