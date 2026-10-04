@@ -43,10 +43,30 @@ const Payments = () => {
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [rawSlipFile, setRawSlipFile] = useState<File | null>(null);
   const [useSlipTimestamp, setUseSlipTimestamp] = useState(true);
+  const [applyWatermarkSlip, setApplyWatermarkSlip] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewSlipUrl, setViewSlipUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateSlipFile = async (rawFile: File | null, shouldWatermark: boolean) => {
+    if (!rawFile) {
+      setSlipFile(null);
+      return;
+    }
+    if (shouldWatermark && selectedInvoice && selectedInvoice.property) {
+      try {
+        const watermarked = await applyWatermark(rawFile, selectedInvoice.property.houseNumber);
+        setSlipFile(watermarked);
+      } catch (err) {
+        console.error('Watermark failed', err);
+        setSlipFile(rawFile);
+      }
+    } else {
+      setSlipFile(rawFile);
+    }
+  };
 
   const applySlipTimestamp = (file: File) => {
     let fileDate = new Date(file.lastModified);
@@ -91,6 +111,8 @@ const Payments = () => {
     setReferenceNumber('');
     setNotes('');
     setSlipFile(null);
+    setRawSlipFile(null);
+    setApplyWatermarkSlip(true);
   };
 
   const handleSubmitPayment = async () => {
@@ -544,7 +566,23 @@ const Payments = () => {
               {paymentMethod === 'transfer' && (
                 <>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>แนบสลิปโอนเงิน *</label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <label style={{ fontWeight: 'bold' }}>แนบสลิปโอนเงิน *</label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#991B1B', cursor: 'pointer', backgroundColor: '#FEF2F2', padding: '4px 10px', borderRadius: '6px', border: '1px solid #FCA5A5' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={applyWatermarkSlip} 
+                          onChange={async (e) => {
+                            const checked = e.target.checked;
+                            setApplyWatermarkSlip(checked);
+                            if (rawSlipFile) {
+                              await updateSlipFile(rawSlipFile, checked);
+                            }
+                          }}
+                        />
+                        <span>พิมพ์ Timestamp / ข้อความสีแดงบนสลิป</span>
+                      </label>
+                    </div>
                     <div 
                       onClick={() => fileInputRef.current?.click()}
                       style={{ border: '2px dashed var(--color-primary-light)', padding: '20px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: slipFile ? '#EFF6FF' : 'transparent' }}
@@ -557,27 +595,23 @@ const Payments = () => {
                         onChange={async (e) => {
                           if (e.target.files && e.target.files[0]) {
                             const file = e.target.files[0];
+                            setRawSlipFile(file);
                             if (useSlipTimestamp) {
                               applySlipTimestamp(file);
                             }
-                            if (selectedInvoice && selectedInvoice.property) {
-                              try {
-                                const watermarked = await applyWatermark(file, selectedInvoice.property.houseNumber);
-                                setSlipFile(watermarked);
-                              } catch (err) {
-                                console.error('Watermark failed', err);
-                                setSlipFile(file);
-                              }
-                            } else {
-                              setSlipFile(file);
-                            }
+                            await updateSlipFile(file, applyWatermarkSlip);
                           }
                         }}
                       />
                       {slipFile ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                           <CheckCircle color="var(--color-success)" size={32} />
-                          <span style={{ fontWeight: 'bold', color: 'var(--color-success)' }}>เลือกไฟล์แล้ว: {slipFile.name}</span>
+                          <span style={{ fontWeight: 'bold', color: 'var(--color-success)' }}>เลือกไฟล์แล้ว: {rawSlipFile?.name || slipFile.name}</span>
+                          {applyWatermarkSlip ? (
+                            <span style={{ fontSize: '0.8rem', color: '#DC2626', fontWeight: '500' }}>✓ มีการประทับ Timestamp สีแดงบนสลิป</span>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>(ไม่พิมพ์ข้อความบนสลิป)</span>
+                          )}
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', color: 'var(--color-primary)' }}>
