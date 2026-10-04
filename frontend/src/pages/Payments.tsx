@@ -43,9 +43,30 @@ const Payments = () => {
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [useSlipTimestamp, setUseSlipTimestamp] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewSlipUrl, setViewSlipUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const applySlipTimestamp = (file: File) => {
+    let fileDate = new Date(file.lastModified);
+    const match = file.name.match(/(\d{13})/);
+    if (match) {
+      const ts = parseInt(match[1]);
+      if (!isNaN(ts) && ts > 1500000000000 && ts < 2500000000000) {
+        fileDate = new Date(ts);
+      }
+    }
+    const year = fileDate.getFullYear();
+    const month = String(fileDate.getMonth() + 1).padStart(2, '0');
+    const day = String(fileDate.getDate()).padStart(2, '0');
+    const hours = String(fileDate.getHours()).padStart(2, '0');
+    const minutes = String(fileDate.getMinutes()).padStart(2, '0');
+
+    setPaymentDate(`${year}-${month}-${day}`);
+    setPaymentTime(`${hours}:${minutes}`);
+    toast.success(`ดึงวัน-เวลาจากสลิปอัตโนมัติ: ${day}/${month}/${year} ${hours}:${minutes} น.`);
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -469,9 +490,27 @@ const Payments = () => {
                 />
               </div>
 
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                <label style={{ fontWeight: 'bold' }}>วันที่และเวลาที่โอน *</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--color-primary-dark)', cursor: 'pointer', backgroundColor: '#EFF6FF', padding: '4px 10px', borderRadius: '6px', border: '1px solid #BFDBFE' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={useSlipTimestamp} 
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setUseSlipTimestamp(checked);
+                      if (checked && slipFile) {
+                        applySlipTimestamp(slipFile);
+                      }
+                    }}
+                  />
+                  <span>ดึงวัน-เวลาโอนจากสลิปอัตโนมัติ</span>
+                </label>
+              </div>
+
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>วันที่โอน *</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85rem', color: '#6B7280' }}>วันที่โอน</label>
                   <input 
                     type="date" 
                     value={paymentDate} 
@@ -480,7 +519,7 @@ const Payments = () => {
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>เวลาที่โอน *</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85rem', color: '#6B7280' }}>เวลาที่โอน</label>
                   <input 
                     type="time" 
                     value={paymentTime} 
@@ -505,7 +544,7 @@ const Payments = () => {
               {paymentMethod === 'transfer' && (
                 <>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>แนบสลิปโอนเงิน</label>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>แนบสลิปโอนเงิน *</label>
                     <div 
                       onClick={() => fileInputRef.current?.click()}
                       style={{ border: '2px dashed var(--color-primary-light)', padding: '20px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: slipFile ? '#EFF6FF' : 'transparent' }}
@@ -518,6 +557,9 @@ const Payments = () => {
                         onChange={async (e) => {
                           if (e.target.files && e.target.files[0]) {
                             const file = e.target.files[0];
+                            if (useSlipTimestamp) {
+                              applySlipTimestamp(file);
+                            }
                             if (selectedInvoice && selectedInvoice.property) {
                               try {
                                 const watermarked = await applyWatermark(file, selectedInvoice.property.houseNumber);
