@@ -1,0 +1,35 @@
+name: Automated Daily Supabase Backup to GitHub
+
+on:
+  schedule:
+    # Run daily at 17:00 UTC (00:00 Thailand Time)
+    - cron: '0 17 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run Database Export Script
+        run: |
+          node frontend/export_backup.cjs
+
+      - name: Commit and Push Backup to GitHub
+        run: |
+          git config --global user.name "GitHub Action Automation"
+          git config --global user.email "action@github.com"
+          git add backups/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Automated daily database backup [skip ci]" && git push)
