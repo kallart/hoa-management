@@ -575,10 +575,11 @@ app.get('/api/logs', async (req, res) => {
 app.get('/api/pool-quality', async (req, res) => {
   try {
     const logs = await prisma.poolWaterQuality.findMany({
-      orderBy: { date: 'asc' }, // Ascending for charts
+      orderBy: { date: 'desc' }, // Get latest
       take: 30 // limit to last 30 days
     });
-    res.json(logs);
+    // Reverse to ascending for charts
+    res.json(logs.reverse());
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch pool logs' });
   }
@@ -599,6 +600,26 @@ app.post('/api/pool-quality', async (req, res) => {
     res.json(log);
   } catch (error) {
     res.status(500).json({ error: 'Failed to save pool log' });
+  }
+});
+
+app.put('/api/pool-quality/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cl, ph, salt, notes, date } = req.body;
+    const log = await prisma.poolWaterQuality.update({
+      where: { id },
+      data: {
+        cl: parseFloat(cl),
+        ph: parseFloat(ph),
+        salt: parseFloat(salt),
+        notes: notes || '',
+        date: date ? new Date(date) : undefined
+      }
+    });
+    res.json(log);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update pool log' });
   }
 });
 

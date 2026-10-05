@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull } from 'lucide-react';
+import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,7 @@ interface PoolLog {
 const PoolSystem: React.FC = () => {
   const [logs, setLogs] = useState<PoolLog[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ cl: '', ph: '', salt: '', notes: '', date: new Date().toISOString().split('T')[0] });
   const [loading, setLoading] = useState(false);
 
@@ -36,9 +37,15 @@ const PoolSystem: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/api/pool-quality', formData);
-      toast.success('บันทึกข้อมูลสำเร็จ');
+      if (editingId) {
+        await api.put(`/api/pool-quality/${editingId}`, formData);
+        toast.success('แก้ไขข้อมูลสำเร็จ');
+      } else {
+        await api.post('/api/pool-quality', formData);
+        toast.success('บันทึกข้อมูลสำเร็จ');
+      }
       setIsModalOpen(false);
+      setEditingId(null);
       fetchLogs();
       setFormData({ cl: '', ph: '', salt: '', notes: '', date: new Date().toISOString().split('T')[0] });
     } catch (error) {
@@ -46,6 +53,18 @@ const PoolSystem: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (log: PoolLog) => {
+    setFormData({
+      cl: log.cl.toString(),
+      ph: log.ph.toString(),
+      salt: log.salt.toString(),
+      notes: log.notes || '',
+      date: new Date(log.date).toISOString().split('T')[0]
+    });
+    setEditingId(log.id);
+    setIsModalOpen(true);
   };
 
   const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
@@ -74,8 +93,17 @@ const PoolSystem: React.FC = () => {
     <div className="page-container">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="h1">ระบบควบคุมสระว่ายน้ำ</h1>
-          <p className="text-muted">บันทึกและติดตามคุณภาพน้ำรายวัน</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1 className="h1">ระบบควบคุมสระว่ายน้ำ</h1>
+            <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+          <p className="text-muted" style={{ margin: '5px 0' }}>บันทึกและติดตามคุณภาพน้ำรายวัน</p>
+          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '8px 15px', borderRadius: '8px', fontSize: '0.9rem', marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} />
+            <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 ถึง วันอังคาร 16:00</span>
+          </div>
         </div>
         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={20} /> บันทึกค่าน้ำวันนี้
@@ -86,19 +114,6 @@ const PoolSystem: React.FC = () => {
         
         {/* Left Column: Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Main Score Card */}
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', color: 'white' }}>
-            <div>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>Water Quality: {currentScore >= 80 ? 'OPTIMAL' : currentScore >= 60 ? 'FAIR' : 'POOR'}</h3>
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '30px', display: 'inline-block' }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentScore}/100</span> <span style={{ opacity: 0.8 }}>score</span>
-              </div>
-            </div>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', borderTopColor: 'white', transform: 'rotate(45deg)' }}>
-              <span style={{ transform: 'rotate(-45deg)', fontSize: '1.8rem', fontWeight: 'bold' }}>{currentScore}</span>
-            </div>
-          </div>
-
           {/* Small Data Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '15px' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -125,6 +140,19 @@ const PoolSystem: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Main Score Card */}
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', color: 'white' }}>
+            <div>
+              <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>Water Quality: {currentScore >= 80 ? 'OPTIMAL' : currentScore >= 60 ? 'FAIR' : 'POOR'}</h3>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '30px', display: 'inline-block' }}>
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentScore}/100</span> <span style={{ opacity: 0.8 }}>score</span>
+              </div>
+            </div>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', borderTopColor: 'white', transform: 'rotate(45deg)' }}>
+              <span style={{ transform: 'rotate(-45deg)', fontSize: '1.8rem', fontWeight: 'bold' }}>{currentScore}</span>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Chart Section */}
@@ -134,6 +162,7 @@ const PoolSystem: React.FC = () => {
             <div style={{ display: 'flex', gap: '15px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#3B82F6', borderRadius: '50%' }}></div> pH Level</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#10B981', borderRadius: '50%' }}></div> Chlorine</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#F59E0B', borderRadius: '50%' }}></div> Salt</span>
             </div>
           </div>
           <div className="card-body" style={{ flex: 1, minHeight: '280px' }}>
@@ -142,7 +171,7 @@ const PoolSystem: React.FC = () => {
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} domain={['auto', 'auto']} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} domain={[6.5, 8.0]} ticks={[6.5, 7.0, 7.5, 8.0]} />
                   <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={10} domain={[0, 5]} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
@@ -150,6 +179,7 @@ const PoolSystem: React.FC = () => {
                   />
                   <Line yAxisId="left" type="monotone" dataKey="ph" name="pH Level" stroke="#3B82F6" strokeWidth={3} dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
                   <Line yAxisId="right" type="monotone" dataKey="cl" name="Chlorine" stroke="#10B981" strokeWidth={3} dot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="salt" name="Salt" stroke="#F59E0B" strokeWidth={3} dot={{ r: 4, fill: '#F59E0B', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -175,12 +205,13 @@ const PoolSystem: React.FC = () => {
                 <th>ความเป็นกรดด่าง (pH)</th>
                 <th>เกลือ (Salt)</th>
                 <th>หมายเหตุ</th>
+                <th style={{ width: '80px', textAlign: 'center' }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>ยังไม่มีประวัติการบันทึก</td>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>ยังไม่มีประวัติการบันทึก</td>
                 </tr>
               ) : (
                 [...logs].reverse().map(log => (
@@ -190,6 +221,16 @@ const PoolSystem: React.FC = () => {
                     <td><span style={{ color: log.ph < 7.2 || log.ph > 7.8 ? '#EF4444' : '#3B82F6', fontWeight: 'bold' }}>{log.ph}</span></td>
                     <td>{log.salt} ppt</td>
                     <td>{log.notes || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button 
+                        className="btn-icon" 
+                        title="แก้ไข" 
+                        onClick={() => handleEdit(log)}
+                        style={{ color: '#6B7280', padding: '4px' }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -203,8 +244,8 @@ const PoolSystem: React.FC = () => {
         <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }}>
           <div className="modal-content" style={{ maxWidth: '500px', width: '100%' }}>
             <div className="modal-header">
-              <h2 className="h2" style={{ margin: 0 }}>บันทึกค่าน้ำประจำวัน</h2>
-              <button className="btn-icon" onClick={() => setIsModalOpen(false)}>✕</button>
+              <h2 className="h2" style={{ margin: 0 }}>{editingId ? 'แก้ไขข้อมูลค่าน้ำ' : 'บันทึกค่าน้ำประจำวัน'}</h2>
+              <button className="btn-icon" onClick={() => { setIsModalOpen(false); setEditingId(null); setFormData({ cl: '', ph: '', salt: '', notes: '', date: new Date().toISOString().split('T')[0] }); }}>✕</button>
             </div>
             <form onSubmit={handleSubmit} className="modal-body">
               <div className="form-group">
@@ -265,7 +306,7 @@ const PoolSystem: React.FC = () => {
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setIsModalOpen(false); setEditingId(null); setFormData({ cl: '', ph: '', salt: '', notes: '', date: new Date().toISOString().split('T')[0] }); }}>
                   ยกเลิก
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
