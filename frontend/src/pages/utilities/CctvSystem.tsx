@@ -8,13 +8,13 @@ export default function CctvSystem() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<any>(null);
   const [updateStatus, setUpdateStatus] = useState('normal');
   const [updatePower, setUpdatePower] = useState('solar');
   const [updateNotes, setUpdateNotes] = useState('');
   const [logDescription, setLogDescription] = useState('');
+  const [imageError, setImageError] = useState(false);
 
   const fetchCameras = async () => {
     try {
@@ -135,14 +135,21 @@ export default function CctvSystem() {
           </div>
           <div className="card-body" style={{ padding: 0, backgroundColor: '#F3F4F6', textAlign: 'center' }}>
             <div style={{ position: 'relative', width: '100%', overflow: 'auto', maxHeight: '600px' }}>
-              <img 
-                src="/map-cctv.png" 
-                alt="Village Map with CCTV Locations" 
-                style={{ width: '100%', minWidth: '800px', display: 'block' }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x600?text=Please+Upload+map-cctv.png+to+public+folder';
-                }}
-              />
+              {!imageError ? (
+                <img 
+                  src="/map-cctv.png" 
+                  alt="Village Map with CCTV Locations" 
+                  style={{ width: '100%', minWidth: '800px', display: 'block' }}
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div style={{ height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#6B7280', border: '2px dashed #D1D5DB', margin: '20px', borderRadius: '12px', backgroundColor: 'white' }}>
+                  <AlertCircle size={48} style={{ marginBottom: '15px', color: '#9CA3AF' }} />
+                  <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#374151' }}>ยังไม่มีรูปแผนผังกล้องวงจรปิด</h3>
+                  <p style={{ margin: 0 }}>กรุณานำรูปแผนผังที่คุณ KONG แคปไว้ มาเซฟชื่อว่า <strong>map-cctv.png</strong></p>
+                  <p style={{ margin: '5px 0 0 0' }}>แล้วนำไปวางในโฟลเดอร์ <code>frontend/public/</code> ครับ</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
