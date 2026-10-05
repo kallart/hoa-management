@@ -125,7 +125,7 @@ const PoolSystem: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '20px', marginBottom: '30px' }}>
         
         {/* Left Column: Cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+        <div style={{ display: 'grid', gridTemplateRows: 'auto auto auto 1fr', gap: '20px', height: '100%' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', flexWrap: 'wrap', gap: '10px' }}>
             <h2 className="h2 text-muted" style={{ margin: 0, lineHeight: 1 }}>บันทึกและติดตามคุณภาพน้ำรายวัน</h2>
