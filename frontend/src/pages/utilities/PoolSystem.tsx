@@ -134,8 +134,8 @@ const PoolSystem: React.FC = () => {
             </span>
           </div>
           
-          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '8px 15px', borderRadius: '8px', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={16} />
+          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '10px 15px', borderRadius: '8px', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+            <AlertCircle size={20} />
             <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 ถึง วันอังคาร 16:00</span>
           </div>
 
@@ -184,7 +184,7 @@ const PoolSystem: React.FC = () => {
         </div>
 
         {/* Right Column: Chart Section */}
-        <div className="card" style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ margin: '20px 0 0 0', height: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column' }}>
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 className="h2" style={{ margin: 0 }}>แนวโน้มค่า pH และ คลอรีน</h2>
             <div style={{ display: 'flex', gap: '15px' }}>
