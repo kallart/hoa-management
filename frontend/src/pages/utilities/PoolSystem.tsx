@@ -113,7 +113,7 @@ const PoolSystem: React.FC = () => {
 
   return (
     <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>บันทึกการควบคุมสระว่ายน้ำ</h1>
         </div>
@@ -122,12 +122,12 @@ const PoolSystem: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '20px', marginBottom: '30px' }}>
         
         {/* Left Column: Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', flexWrap: 'wrap', gap: '10px' }}>
             <h2 className="h2 text-muted" style={{ margin: 0, lineHeight: 1 }}>บันทึกและติดตามคุณภาพน้ำรายวัน</h2>
             <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', margin: 0 }} className="h2">
               {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -140,7 +140,7 @@ const PoolSystem: React.FC = () => {
           </div>
 
           {/* Small Data Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '15px' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <p style={{ color: '#6B7280', margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: 'bold' }}>SALT (เกลือ)</p>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
@@ -170,7 +170,7 @@ const PoolSystem: React.FC = () => {
           </div>
 
           {/* Main Score Card */}
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', color: 'white' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', color: 'white' }}>
             <div>
               <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>Water Quality: {currentScore >= 80 ? 'OPTIMAL' : currentScore >= 60 ? 'FAIR' : 'POOR'}</h3>
               <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '30px', display: 'inline-block' }}>
@@ -185,7 +185,7 @@ const PoolSystem: React.FC = () => {
 
         {/* Right Column: Chart Section */}
         <div className="card" style={{ margin: '20px 0 0 0', height: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column' }}>
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <h2 className="h2" style={{ margin: 0 }}>แนวโน้มค่า pH และ คลอรีน</h2>
             <div style={{ display: 'flex', gap: '15px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#3B82F6', borderRadius: '50%' }}></div> pH Level</span>
