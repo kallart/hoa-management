@@ -168,10 +168,9 @@ const PoolSystem: React.FC = () => {
               <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 7.2-7.6</p>
             </div>
           </div>
-        </div>
 
-        {/* Right Column: Chart Section */}
-        <div className="card" style={{ margin: '20px 0 0 0', height: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column' }}>
+{/* Chart Section */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', margin: 0 }}>
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <h2 className="h2" style={{ margin: 0 }}>แนวโน้มค่า pH และ คลอรีน</h2>
             <div style={{ display: 'flex', gap: '15px' }}>
@@ -214,11 +213,12 @@ const PoolSystem: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* History Table */}
-      <div className="card">
+        </div>
+
+
+      {/* Right Column: History Table */}
+        <div className="card" style={{ margin: '20px 0 0 0', height: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column' }}>
         <div className="card-header">
           <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
         </div>
@@ -274,6 +274,8 @@ const PoolSystem: React.FC = () => {
           </table>
         </div>
       </div>
+      </div>
+
 
       {/* Modal Form */}
       {isModalOpen && (
