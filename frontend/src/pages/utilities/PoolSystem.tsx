@@ -91,9 +91,9 @@ const PoolSystem: React.FC = () => {
 
   return (
     <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="h1" style={{ margin: 0 }}>ระบบควบคุมสระว่ายน้ำ</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ paddingTop: '5px' }}>
+          <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>บันทึกการควบคุมสระว่ายน้ำ</h1>
         </div>
         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={20} /> บันทึกค่าน้ำวันนี้
@@ -105,8 +105,8 @@ const PoolSystem: React.FC = () => {
         {/* Left Column: Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-10px' }}>
-            <h2 className="h2 text-muted" style={{ margin: 0 }}>บันทึกและติดตามคุณภาพน้ำรายวัน</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px' }}>
+            <h2 className="h2 text-muted" style={{ margin: 0, lineHeight: 1 }}>บันทึกและติดตามคุณภาพน้ำรายวัน</h2>
             <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', margin: 0 }} className="h2">
               {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
