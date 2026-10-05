@@ -261,22 +261,24 @@ const PoolSystem: React.FC = () => {
                     <td>{log.salt} ppt</td>
                     <td>{log.notes || '-'}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <button 
-                        className="btn-icon" 
-                        title="แก้ไข" 
-                        onClick={() => handleEdit(log)}
-                        style={{ color: '#6B7280', padding: '4px', marginRight: '5px' }}
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        className="btn-icon" 
-                        title="ลบ" 
-                        onClick={() => handleDelete(log.id)}
-                        style={{ color: '#EF4444', padding: '4px' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                        <button 
+                          className="btn-icon" 
+                          title="แก้ไข" 
+                          onClick={() => handleEdit(log)}
+                          style={{ color: '#6B7280', padding: '4px' }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="btn-icon" 
+                          title="ลบ" 
+                          onClick={() => handleDelete(log.id)}
+                          style={{ color: '#EF4444', padding: '4px' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
