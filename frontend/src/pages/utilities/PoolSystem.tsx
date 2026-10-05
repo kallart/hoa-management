@@ -93,17 +93,7 @@ const PoolSystem: React.FC = () => {
     <div className="page-container">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 className="h1">ระบบควบคุมสระว่ายน้ำ</h1>
-            <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-              {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </span>
-          </div>
-          <p className="text-muted" style={{ margin: '5px 0' }}>บันทึกและติดตามคุณภาพน้ำรายวัน</p>
-          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '8px 15px', borderRadius: '8px', fontSize: '0.9rem', marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={16} />
-            <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 ถึง วันอังคาร 16:00</span>
-          </div>
+          <h1 className="h1" style={{ margin: 0 }}>ระบบควบคุมสระว่ายน้ำ</h1>
         </div>
         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={20} /> บันทึกค่าน้ำวันนี้
@@ -114,6 +104,19 @@ const PoolSystem: React.FC = () => {
         
         {/* Left Column: Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-10px' }}>
+            <p className="text-muted" style={{ margin: 0, fontSize: '1.15rem' }}>บันทึกและติดตามคุณภาพน้ำรายวัน</p>
+            <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+          
+          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '8px 15px', borderRadius: '8px', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} />
+            <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 ถึง วันอังคาร 16:00</span>
+          </div>
+
           {/* Small Data Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '15px' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -122,6 +125,7 @@ const PoolSystem: React.FC = () => {
                 <Droplets size={24} color="#10B981" />
                 <h2 style={{ margin: 0, fontSize: '2rem', color: '#1F2937' }}>{latestLog?.salt || 0} <span style={{ fontSize: '1rem', color: '#6B7280', fontWeight: 'normal' }}>ppt</span></h2>
               </div>
+              <p style={{ margin: '10px 0 0 0', fontSize: '0.8rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>ค่าปกติ: 2.5 - 4.5 ppt</p>
             </div>
 
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -130,6 +134,7 @@ const PoolSystem: React.FC = () => {
                 <Activity size={24} color="#3B82F6" />
                 <h2 style={{ margin: 0, fontSize: '2rem', color: '#1F2937' }}>{latestLog?.cl || 0} <span style={{ fontSize: '1rem', color: '#6B7280', fontWeight: 'normal' }}>ppm</span></h2>
               </div>
+              <p style={{ margin: '10px 0 0 0', fontSize: '0.8rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>ค่าปกติ: 1.0 - 3.0 ppm</p>
             </div>
 
             <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -138,6 +143,7 @@ const PoolSystem: React.FC = () => {
                 <Droplets size={24} color="#93C5FD" />
                 <h2 style={{ margin: 0, fontSize: '2.5rem' }}>{latestLog?.ph || 0}</h2>
               </div>
+              <p style={{ margin: '10px 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>ค่าปกติ: 7.2 - 7.6</p>
             </div>
           </div>
 
