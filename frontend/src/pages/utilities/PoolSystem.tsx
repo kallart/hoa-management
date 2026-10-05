@@ -83,8 +83,8 @@ const PoolSystem: React.FC = () => {
 
   const currentScore = calculateScore(latestLog);
 
-  // Formatting date for charts
-  const chartData = logs.map(log => ({
+  // Formatting date for charts (Last 7 days only)
+  const chartData = logs.slice(-7).map(log => ({
     ...log,
     displayDate: new Date(log.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
   }));
@@ -168,25 +168,32 @@ const PoolSystem: React.FC = () => {
             <div style={{ display: 'flex', gap: '15px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#3B82F6', borderRadius: '50%' }}></div> pH Level</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#10B981', borderRadius: '50%' }}></div> Chlorine</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}><div style={{ width: '10px', height: '10px', backgroundColor: '#F59E0B', borderRadius: '50%' }}></div> Salt</span>
             </div>
           </div>
           <div className="card-body" style={{ flex: 1, minHeight: '280px' }}>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorPh" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorCl" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} domain={[6.5, 8.0]} ticks={[6.5, 7.0, 7.5, 8.0]} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={10} domain={[0, 5]} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} domain={[0, 8]} ticks={[0, 2, 4, 6, 8]} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                     labelStyle={{ fontWeight: 'bold', color: '#374151' }}
                   />
-                  <Line yAxisId="left" type="monotone" dataKey="ph" name="pH Level" stroke="#3B82F6" strokeWidth={3} dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="cl" name="Chlorine" stroke="#10B981" strokeWidth={3} dot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="salt" name="Salt" stroke="#F59E0B" strokeWidth={3} dot={{ r: 4, fill: '#F59E0B', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
-                </LineChart>
+                  <Area type="monotone" dataKey="ph" name="pH Level" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorPh)" activeDot={{ r: 6 }} dot={false} />
+                  <Area type="monotone" dataKey="cl" name="Chlorine" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorCl)" activeDot={{ r: 6 }} dot={false} />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#9CA3AF' }}>
