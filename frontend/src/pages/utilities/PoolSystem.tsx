@@ -140,8 +140,8 @@ const PoolSystem: React.FC = () => {
           </div>
 
           {/* Small Data Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '15px' }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <p style={{ color: '#6B7280', margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: 'bold' }}>SALT (เกลือ)</p>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                 <Droplets size={24} color="#10B981" />
@@ -150,7 +150,7 @@ const PoolSystem: React.FC = () => {
               <p style={{ margin: '10px 0 0 0', fontSize: '0.8rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>ค่าปกติ: 2.5 - 4.5 ppt</p>
             </div>
 
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <p style={{ color: '#6B7280', margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: 'bold' }}>CHLORINE (คลอรีน)</p>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                 <Activity size={24} color="#3B82F6" />
@@ -159,7 +159,7 @@ const PoolSystem: React.FC = () => {
               <p style={{ margin: '10px 0 0 0', fontSize: '0.8rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>ค่าปกติ: 1.0 - 3.0 ppm</p>
             </div>
 
-            <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: 'bold', opacity: 0.8 }}>PH LEVEL</p>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                 <Droplets size={24} color="#93C5FD" />
