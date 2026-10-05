@@ -623,4 +623,16 @@ app.put('/api/pool-quality/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/pool-quality/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.poolWaterQuality.delete({
+      where: { id }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete pool log' });
+  }
+});
+
 export default app;

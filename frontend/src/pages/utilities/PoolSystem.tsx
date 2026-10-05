@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2, Trash2 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, LabelList } from 'recharts';
 import toast from 'react-hot-toast';
 
 interface PoolLog {
@@ -12,6 +12,16 @@ interface PoolLog {
   salt: number;
   notes: string;
 }
+
+const CustomLabel = (props: any) => {
+  const { x, y, value, color } = props;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <rect x={-15} y={-22} width={30} height={18} fill={color} rx={4} stroke="white" strokeWidth={1.5} />
+      <text x={0} y={-9} fill="white" fontSize={11} fontWeight="bold" textAnchor="middle">{value}</text>
+    </g>
+  );
+};
 
 const PoolSystem: React.FC = () => {
   const [logs, setLogs] = useState<PoolLog[]>([]);
@@ -65,6 +75,18 @@ const PoolSystem: React.FC = () => {
     });
     setEditingId(log.id);
     setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('คุณต้องการลบข้อมูลนี้ใช่หรือไม่?')) {
+      try {
+        await api.delete(`/api/pool-quality/${id}`);
+        toast.success('ลบข้อมูลสำเร็จ');
+        fetchLogs();
+      } catch (error) {
+        toast.error('เกิดข้อผิดพลาดในการลบข้อมูล');
+      }
+    }
   };
 
   const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
@@ -191,8 +213,12 @@ const PoolSystem: React.FC = () => {
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                     labelStyle={{ fontWeight: 'bold', color: '#374151' }}
                   />
-                  <Area type="monotone" dataKey="ph" name="pH Level" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorPh)" activeDot={{ r: 6 }} dot={false} />
-                  <Area type="monotone" dataKey="cl" name="Chlorine" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorCl)" activeDot={{ r: 6 }} dot={false} />
+                  <Area type="monotone" dataKey="ph" name="pH Level" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorPh)" activeDot={{ r: 6 }} dot={false}>
+                    <LabelList dataKey="ph" content={(props: any) => <CustomLabel {...props} color="#3B82F6" />} />
+                  </Area>
+                  <Area type="monotone" dataKey="cl" name="Chlorine" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorCl)" activeDot={{ r: 6 }} dot={false}>
+                    <LabelList dataKey="cl" content={(props: any) => <CustomLabel {...props} color="#10B981" />} />
+                  </Area>
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -239,9 +265,17 @@ const PoolSystem: React.FC = () => {
                         className="btn-icon" 
                         title="แก้ไข" 
                         onClick={() => handleEdit(log)}
-                        style={{ color: '#6B7280', padding: '4px' }}
+                        style={{ color: '#6B7280', padding: '4px', marginRight: '5px' }}
                       >
                         <Edit2 size={16} />
+                      </button>
+                      <button 
+                        className="btn-icon" 
+                        title="ลบ" 
+                        onClick={() => handleDelete(log.id)}
+                        style={{ color: '#EF4444', padding: '4px' }}
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
