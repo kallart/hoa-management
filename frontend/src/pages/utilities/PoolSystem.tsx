@@ -106,8 +106,8 @@ const PoolSystem: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-10px' }}>
-            <p className="text-muted" style={{ margin: 0, fontSize: '1.15rem' }}>บันทึกและติดตามคุณภาพน้ำรายวัน</p>
-            <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', fontSize: '1.1rem', fontWeight: 'bold' }}>
+            <h2 className="h2 text-muted" style={{ margin: 0 }}>บันทึกและติดตามคุณภาพน้ำรายวัน</h2>
+            <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '4px 12px', borderRadius: '20px', margin: 0 }} className="h2">
               {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
