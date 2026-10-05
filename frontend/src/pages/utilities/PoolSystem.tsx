@@ -170,7 +170,7 @@ const PoolSystem: React.FC = () => {
           </div>
 
 {/* Chart Section */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', margin: 0 }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', margin: 0, flex: 1 }}>
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <h2 className="h2" style={{ margin: 0 }}>แนวโน้มค่า pH และ คลอรีน</h2>
             <div style={{ display: 'flex', gap: '15px' }}>
