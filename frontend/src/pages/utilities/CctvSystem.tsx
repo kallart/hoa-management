@@ -15,13 +15,21 @@ export default function CctvSystem() {
   const [updateNotes, setUpdateNotes] = useState('');
   const [logDescription, setLogDescription] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [uploadingMap, setUploadingMap] = useState(false);
 
   const fetchCameras = async () => {
     try {
       const response = await api.get('/api/cctv');
       setCameras(response.data);
+      
+      const settingsRes = await api.get('/api/settings');
+      if (settingsRes.data && settingsRes.data.cctvMapUrl) {
+        setMapUrl(settingsRes.data.cctvMapUrl);
+        setImageError(false);
+      }
     } catch (error) {
-      toast.error('ไม่สามารถดึงข้อมูลกล้องวงจรปิดได้');
+      toast.error('ไม่สามารถดึงข้อมูลได้');
     } finally {
       setLoading(false);
     }
@@ -30,6 +38,29 @@ export default function CctvSystem() {
   useEffect(() => {
     fetchCameras();
   }, []);
+
+  const handleMapUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('map', file);
+
+    try {
+      setUploadingMap(true);
+      const res = await api.post('/api/settings/upload-map', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMapUrl(res.data.url);
+      setImageError(false);
+      toast.success('อัปโหลดแผนผังเรียบร้อยแล้ว');
+    } catch (error) {
+      console.error(error);
+      toast.error('ไม่สามารถอัปโหลดแผนผังได้');
+    } finally {
+      setUploadingMap(false);
+    }
+  };
 
   const handleSeed = async () => {
     try {
@@ -130,14 +161,26 @@ export default function CctvSystem() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
         {/* Map Section */}
         <div className="card">
-          <div className="card-header">
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 className="h2" style={{ margin: 0 }}>แผนผังกล้องวงจรปิด (CCTV Map)</h2>
+            <div>
+              <input 
+                type="file" 
+                id="mapUpload" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={handleMapUpload}
+              />
+              <label htmlFor="mapUpload" className="btn btn-primary" style={{ cursor: 'pointer', padding: '6px 12px', fontSize: '0.9rem' }}>
+                {uploadingMap ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปแผนผัง'}
+              </label>
+            </div>
           </div>
           <div className="card-body" style={{ padding: 0, backgroundColor: '#F3F4F6', textAlign: 'center' }}>
             <div style={{ position: 'relative', width: '100%', overflow: 'auto', maxHeight: '600px' }}>
               {!imageError ? (
                 <img 
-                  src="/map-cctv.png" 
+                  src={mapUrl || "/map-cctv.png"} 
                   alt="Village Map with CCTV Locations" 
                   style={{ width: '100%', minWidth: '800px', display: 'block' }}
                   onError={() => setImageError(true)}
@@ -146,8 +189,8 @@ export default function CctvSystem() {
                 <div style={{ height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#6B7280', border: '2px dashed #D1D5DB', margin: '20px', borderRadius: '12px', backgroundColor: 'white' }}>
                   <AlertCircle size={48} style={{ marginBottom: '15px', color: '#9CA3AF' }} />
                   <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#374151' }}>ยังไม่มีรูปแผนผังกล้องวงจรปิด</h3>
-                  <p style={{ margin: 0 }}>กรุณานำรูปแผนผังที่คุณ KONG แคปไว้ มาเซฟชื่อว่า <strong>map-cctv.png</strong></p>
-                  <p style={{ margin: '5px 0 0 0' }}>แล้วนำไปวางในโฟลเดอร์ <code>frontend/public/</code> ครับ</p>
+                  <p style={{ margin: 0 }}>สามารถกดปุ่ม <strong>"อัปโหลดรูปแผนผัง"</strong> ด้านขวาบน</p>
+                  <p style={{ margin: '5px 0 0 0' }}>เพื่อนำรูปแผนผังของคุณ KONG ขึ้นมาแสดงได้ทันทีครับ</p>
                 </div>
               )}
             </div>

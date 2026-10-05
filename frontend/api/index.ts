@@ -122,6 +122,52 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
+app.post('/api/settings/upload-map', upload.single('map'), requireAdmin, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const ext = path.extname(req.file.originalname);
+    const filename = `cctv/map-cctv-${Date.now()}${ext}`;
+
+    const { data, error } = await supabase.storage
+      .from('slips')
+      .upload(filename, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase upload error:', error);
+      return res.status(500).json({ error: 'Failed to upload map' });
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('slips').getPublicUrl(filename);
+    const mapUrl = publicUrlData.publicUrl;
+
+    // Update the setting
+    let setting = await prisma.setting.findFirst();
+    if (setting) {
+      setting = await prisma.setting.update({
+        where: { id: setting.id },
+        data: { cctvMapUrl: mapUrl }
+      });
+    } else {
+      setting = await prisma.setting.create({
+        data: {
+          villageName: 'รอยัลราชาวดี',
+          commonAreaRate: 0,
+          cctvMapUrl: mapUrl
+        }
+      });
+    }
+
+    res.json({ message: 'Map uploaded successfully', url: mapUrl, setting });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to process map upload' });
+  }
+});
+
 // Dashboard Stats
 app.get('/api/dashboard', async (req, res) => {
   try {

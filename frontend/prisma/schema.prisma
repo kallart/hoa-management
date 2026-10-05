@@ -23,6 +23,7 @@ model Setting {
   villageName    String
   commonAreaRate Float
   promptPay      String?
+  cctvMapUrl     String?
   updatedAt      DateTime @updatedAt
 }
 
