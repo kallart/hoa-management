@@ -4,6 +4,7 @@ import api from '../../utils/api';
 
 const UtilitiesDashboard: React.FC = () => {
   const [latestPoolLog, setLatestPoolLog] = useState<any>(null);
+  const [cctvStats, setCctvStats] = useState({ offline: 0, total: 0 });
 
   useEffect(() => {
     const fetchPoolData = async () => {
@@ -16,7 +17,21 @@ const UtilitiesDashboard: React.FC = () => {
         console.error('Failed to fetch pool quality data');
       }
     };
+    
+    const fetchCctvData = async () => {
+      try {
+        const response = await api.get('/api/cctv');
+        if (response.data) {
+          const offlineCount = response.data.filter((c: any) => c.status !== 'normal').length;
+          setCctvStats({ offline: offlineCount, total: response.data.length });
+        }
+      } catch (error) {
+        console.error('Failed to fetch CCTV data');
+      }
+    };
+
     fetchPoolData();
+    fetchCctvData();
   }, []);
 
   return (
@@ -44,8 +59,10 @@ const UtilitiesDashboard: React.FC = () => {
             <Camera size={24} />
           </div>
           <div className="stat-content">
-            <p className="stat-label">กล้องวงจรปิด (ออฟไลน์)</p>
-            <h3 className="stat-value" style={{ color: '#EF4444' }}>2 จุด</h3>
+            <p className="stat-label">กล้องวงจรปิด (ขัดข้อง)</p>
+            <h3 className="stat-value" style={{ color: cctvStats.offline > 0 ? '#EF4444' : '#10B981' }}>
+              {cctvStats.total > 0 ? `${cctvStats.offline} จุด` : 'กำลังโหลด...'}
+            </h3>
           </div>
         </div>
 

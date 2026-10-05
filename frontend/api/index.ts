@@ -635,4 +635,108 @@ app.delete('/api/pool-quality/:id', async (req, res) => {
   }
 });
 
+// --- CCTV Camera Routes ---
+
+app.get('/api/cctv', async (req, res) => {
+  try {
+    const cameras = await prisma.cctvCamera.findMany({
+      include: {
+        maintenanceLogs: {
+          orderBy: { createdAt: 'desc' }
+        }
+      },
+      orderBy: { cameraNumber: 'asc' }
+    });
+    res.json(cameras);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch CCTV cameras' });
+  }
+});
+
+app.put('/api/cctv/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes, powerSource, logDescription } = req.body;
+    
+    // Update camera
+    const camera = await prisma.cctvCamera.update({
+      where: { id },
+      data: {
+        status,
+        notes,
+        powerSource,
+        ...(logDescription ? {
+          maintenanceLogs: {
+            create: {
+              status: status,
+              description: logDescription
+            }
+          }
+        } : {})
+      },
+      include: { maintenanceLogs: { orderBy: { createdAt: 'desc' } } }
+    });
+    
+    res.json(camera);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update CCTV camera' });
+  }
+});
+
+app.post('/api/cctv/seed', async (req, res) => {
+  try {
+    // Check if we already have cameras
+    const count = await prisma.cctvCamera.count();
+    if (count > 0) {
+      return res.status(400).json({ error: 'Cameras already seeded' });
+    }
+
+    const camerasData = Array.from({ length: 18 }).map((_, i) => {
+      const num = i + 1;
+      const camNum = `CCTV${num.toString().padStart(2, '0')}`;
+      
+      let location = `จุดที่ ${num}`;
+      let status = 'normal';
+      let powerSource = 'solar';
+      let notes = '';
+
+      // Specific conditions based on user map
+      if (num === 1) { location = 'หน้าป้อม รปภ (ซ้าย)'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 2) { location = 'หน้าป้อม รปภ (กลาง)'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 3) { location = 'หน้าป้อม รปภ (ขวา)'; }
+      if (num === 4) { location = 'ทางเข้าหลัก (หลังป้อม)'; status = 'offline'; notes = 'เปิดไม่ติด ชาร์จไม่เข้า'; }
+      if (num === 5) { location = 'ซอย 405/2 - 405/8 (ต้นซอย)'; }
+      if (num === 6) { location = 'ซอย 405/9 - 405/13'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 7) { location = 'ท้ายซอย 405/14'; }
+      if (num === 8) { location = 'กลางซอย 405/24 - 405/25'; }
+      if (num === 9) { location = 'ท้ายซอย 405/31'; }
+      if (num === 10) { location = 'ท้ายซอย 405/36 (ขวา)'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 11) { location = 'ท้ายซอย 405/36 (ซ้าย)'; status = 'offline'; notes = 'เปิดไม่ติด ชาร์จไม่เข้า'; }
+      if (num === 12) { location = 'ท้ายซอย 405/40'; }
+      if (num === 13) { location = 'มุมซอย 405/41'; }
+      if (num === 14) { location = 'ท้ายซอย 405/47'; }
+      if (num === 15) { location = 'กลางซอย 405/52'; }
+      if (num === 16) { location = 'ซอย 405/57'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 17) { location = 'ท้ายซอย 405/59'; }
+      if (num === 18) { location = 'ท้ายซอย 405/62'; }
+
+      return {
+        cameraNumber: camNum,
+        location,
+        status,
+        powerSource,
+        notes
+      };
+    });
+
+    for (const cam of camerasData) {
+      await prisma.cctvCamera.create({ data: cam });
+    }
+
+    res.json({ success: true, message: 'Seeded 18 cameras successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to seed cameras' });
+  }
+});
+
 export default app;

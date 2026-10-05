@@ -16,6 +16,7 @@ import Home from './pages/Home';
 import UtilitiesLayout from './layouts/UtilitiesLayout';
 import UtilitiesDashboard from './pages/utilities/UtilitiesDashboard';
 import PoolSystem from './pages/utilities/PoolSystem';
+import CctvSystem from './pages/utilities/CctvSystem';
 import DummyPage from './pages/utilities/DummyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -54,7 +55,7 @@ function App() {
             <Route index element={<Navigate to="/utilities/dashboard" replace />} />
             <Route path="dashboard" element={<UtilitiesDashboard />} />
             <Route path="pool" element={<PoolSystem />} />
-            <Route path="cctv" element={<DummyPage />} />
+            <Route path="cctv" element={<CctvSystem />} />
             <Route path="maintenance" element={<DummyPage />} />
             <Route path="settings" element={<DummyPage />} />
           </Route>
