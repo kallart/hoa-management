@@ -213,12 +213,11 @@ const PoolSystem: React.FC = () => {
               </div>
             )}
           </div>
-
         </div>
-
+      </div>
 
       {/* Right Column: History Table */}
-        <div className="card" style={{ margin: '20px 0 0 0', height: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column' }}>
+      <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div className="card-header">
           <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
         </div>
