@@ -140,45 +140,32 @@ const PoolSystem: React.FC = () => {
           </div>
 
           {/* Small Data Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <p style={{ color: '#6B7280', margin: '0 0 10px 0', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>SALT (เกลือ)</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Droplets size={24} color="#10B981" />
-                <h2 style={{ margin: 0, fontSize: '2rem', color: '#1F2937', lineHeight: 1 }}>{latestLog?.salt || 0} <span style={{ fontSize: '0.9rem', color: '#6B7280', fontWeight: 'normal' }}>ppt</span></h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
+              <p style={{ color: '#6B7280', margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>SALT (เกลือ)</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Droplets size={32} color="#10B981" />
+                <h2 style={{ margin: 0, fontSize: '2.6rem', color: '#1F2937', lineHeight: 1 }}>{latestLog?.salt || 0} <span style={{ fontSize: '1.2rem', color: '#6B7280', fontWeight: 'normal' }}>ppt</span></h2>
               </div>
-              <p style={{ margin: '15px 0 0 0', fontSize: '0.75rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '6px', borderRadius: '6px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 2.5-4.5</p>
+              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 2.5-4.5</p>
             </div>
 
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <p style={{ color: '#6B7280', margin: '0 0 10px 0', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CHLORINE (คลอรีน)</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Activity size={24} color="#3B82F6" />
-                <h2 style={{ margin: 0, fontSize: '2rem', color: '#1F2937', lineHeight: 1 }}>{latestLog?.cl || 0} <span style={{ fontSize: '0.9rem', color: '#6B7280', fontWeight: 'normal' }}>ppm</span></h2>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
+              <p style={{ color: '#6B7280', margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CHLORINE (คลอรีน)</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Activity size={32} color="#3B82F6" />
+                <h2 style={{ margin: 0, fontSize: '2.6rem', color: '#1F2937', lineHeight: 1 }}>{latestLog?.cl || 0} <span style={{ fontSize: '1.2rem', color: '#6B7280', fontWeight: 'normal' }}>ppm</span></h2>
               </div>
-              <p style={{ margin: '15px 0 0 0', fontSize: '0.75rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '6px', borderRadius: '6px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 1.0-3.0</p>
+              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 1.0-3.0</p>
             </div>
 
-            <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <p style={{ margin: '0 0 10px 0', fontSize: '0.8rem', fontWeight: 'bold', opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>PH LEVEL</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Droplets size={24} color="#93C5FD" />
-                <h2 style={{ margin: 0, fontSize: '2rem', lineHeight: 1 }}>{latestLog?.ph || 0}</h2>
+            <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>PH LEVEL</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Droplets size={32} color="#93C5FD" />
+                <h2 style={{ margin: 0, fontSize: '2.6rem', lineHeight: 1 }}>{latestLog?.ph || 0}</h2>
               </div>
-              <p style={{ margin: '15px 0 0 0', fontSize: '0.75rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '6px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 7.2-7.6</p>
-            </div>
-          </div>
-
-          {/* Main Score Card */}
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', color: 'white' }}>
-            <div>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>Water Quality: {currentScore >= 80 ? 'OPTIMAL' : currentScore >= 60 ? 'FAIR' : 'POOR'}</h3>
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '30px', display: 'inline-block' }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentScore}/100</span> <span style={{ opacity: 0.8 }}>score</span>
-              </div>
-            </div>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', borderTopColor: 'white', transform: 'rotate(45deg)' }}>
-              <span style={{ transform: 'rotate(-45deg)', fontSize: '1.8rem', fontWeight: 'bold' }}>{currentScore}</span>
+              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 7.2-7.6</p>
             </div>
           </div>
         </div>
