@@ -631,7 +631,7 @@ app.get('/api/pool-quality', async (req, res) => {
   }
 });
 
-app.post('/api/pool-quality', async (req, res) => {
+app.post('/api/pool-quality', requireAdmin, async (req, res) => {
   try {
     const { cl, ph, salt, notes, date } = req.body;
     const log = await prisma.poolWaterQuality.create({
@@ -649,7 +649,7 @@ app.post('/api/pool-quality', async (req, res) => {
   }
 });
 
-app.put('/api/pool-quality/:id', async (req, res) => {
+app.put('/api/pool-quality/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { cl, ph, salt, notes, date } = req.body;
@@ -669,7 +669,7 @@ app.put('/api/pool-quality/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/pool-quality/:id', async (req, res) => {
+app.delete('/api/pool-quality/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.poolWaterQuality.delete({
@@ -699,7 +699,7 @@ app.get('/api/cctv', async (req, res) => {
   }
 });
 
-app.put('/api/cctv/:id', async (req, res) => {
+app.put('/api/cctv/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, notes, powerSource, logDescription } = req.body;
@@ -729,7 +729,7 @@ app.put('/api/cctv/:id', async (req, res) => {
   }
 });
 
-app.post('/api/cctv/seed', async (req, res) => {
+app.post('/api/cctv/seed', requireAdmin, async (req, res) => {
   try {
     // Check if we already have cameras
     const count = await prisma.cctvCamera.count();
