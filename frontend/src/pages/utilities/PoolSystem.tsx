@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2, Trash2 } from 'lucide-react';
+import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2, Trash2, Beaker } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, LabelList } from 'recharts';
 import toast from 'react-hot-toast';
 
@@ -115,7 +115,7 @@ const PoolSystem: React.FC = () => {
     <div className="page-container">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ paddingTop: '5px' }}>
-          <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>บันทึกการควบคุมสระว่ายน้ำ</h1>
+          <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
         </div>
         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={20} /> บันทึกค่าน้ำวันนี้
@@ -136,7 +136,7 @@ const PoolSystem: React.FC = () => {
           
           <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '10px 15px', borderRadius: '8px', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <AlertCircle size={20} />
-            <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 ถึง วันอังคาร 16:00</span>
+            <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 น. ถึง วันอังคาร 16:00 น.</span>
           </div>
 
           {/* Small Data Cards */}
@@ -162,7 +162,7 @@ const PoolSystem: React.FC = () => {
             <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
               <p style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>PH LEVEL</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Droplets size={32} color="#93C5FD" />
+                <Beaker size={32} color="#93C5FD" />
                 <h2 style={{ margin: 0, fontSize: '2.6rem', lineHeight: 1 }}>{latestLog?.ph || 0}</h2>
               </div>
               <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 7.2-7.6</p>
