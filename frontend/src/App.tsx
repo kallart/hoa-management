@@ -30,6 +30,22 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
+const AdminRoute = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>กำลังตรวจสอบสิทธิ์...</div>;
+  }
+  
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/utilities/pool" replace />;
+  }
+  
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -37,10 +53,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+          <Route path="/home" element={<AdminRoute><Home /></AdminRoute>} />
           
           {/* Common Fee System */}
-          <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+          <Route path="/" element={<AdminRoute><MainLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/home" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="properties" element={<Properties />} />
@@ -53,18 +69,18 @@ function App() {
           {/* Utilities System */}
           <Route path="/utilities" element={<PrivateRoute><UtilitiesLayout /></PrivateRoute>}>
             <Route index element={<Navigate to="/utilities/dashboard" replace />} />
-            <Route path="dashboard" element={<UtilitiesDashboard />} />
+            <Route path="dashboard" element={<AdminRoute><UtilitiesDashboard /></AdminRoute>} />
             <Route path="pool" element={<PoolSystem />} />
-            <Route path="cctv" element={<CctvSystem />} />
-            <Route path="maintenance" element={<DummyPage />} />
-            <Route path="settings" element={<DummyPage />} />
+            <Route path="cctv" element={<AdminRoute><CctvSystem /></AdminRoute>} />
+            <Route path="maintenance" element={<AdminRoute><DummyPage /></AdminRoute>} />
+            <Route path="settings" element={<AdminRoute><DummyPage /></AdminRoute>} />
           </Route>
           
           {/* Standalone print pages */}
-          <Route path="/invoices/batch-print" element={<PrivateRoute><BatchPrintInvoices /></PrivateRoute>} />
-          <Route path="/receipts/batch-print" element={<PrivateRoute><BatchPrintReceipts /></PrivateRoute>} />
-          <Route path="/invoices/:id" element={<PrivateRoute><InvoiceDetail /></PrivateRoute>} />
-          <Route path="/receipts/:id" element={<PrivateRoute><ReceiptDetail /></PrivateRoute>} />
+          <Route path="/invoices/batch-print" element={<AdminRoute><BatchPrintInvoices /></AdminRoute>} />
+          <Route path="/receipts/batch-print" element={<AdminRoute><BatchPrintReceipts /></AdminRoute>} />
+          <Route path="/invoices/:id" element={<AdminRoute><InvoiceDetail /></AdminRoute>} />
+          <Route path="/receipts/:id" element={<AdminRoute><ReceiptDetail /></AdminRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -20,7 +20,11 @@ const Login = () => {
       const response = await api.post('/api/auth/login', { username, password });
       login(response.data.token, response.data.user);
       toast.success('เข้าสู่ระบบสำเร็จ');
-      navigate('/home');
+      if (response.data.user.role === 'VIEWER') {
+        navigate('/utilities/pool');
+      } else {
+        navigate('/home');
+      }
     } catch (err: unknown) {
       const error = err as any;
       if (error.response?.status === 500 || error.response?.status === 502 || error.response?.status === 504) {
