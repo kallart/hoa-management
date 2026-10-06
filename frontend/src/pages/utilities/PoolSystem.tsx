@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2, Trash2, Beaker } from 'lucide-react';
+import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2, Trash2, Beaker, LogOut } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, LabelList } from 'recharts';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface PoolLog {
   id: string;
@@ -25,9 +26,15 @@ const CustomLabel = (props: any) => {
 };
 
 const PoolSystem: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [logs, setLogs] = useState<PoolLog[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ cl: '', ph: '', salt: '', notes: '', date: new Date().toISOString().split('T')[0] });
   const [loading, setLoading] = useState(false);
@@ -119,9 +126,17 @@ const PoolSystem: React.FC = () => {
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
         </div>
-        {user?.role !== 'VIEWER' && (
+        {user?.role !== 'VIEWER' ? (
           <button className="btn btn-primary no-print" onClick={() => setIsModalOpen(true)}>
             <Plus size={20} /> บันทึกค่าน้ำวันนี้
+          </button>
+        ) : (
+          <button 
+            className="btn btn-secondary no-print" 
+            onClick={handleLogout}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', borderColor: '#EF4444', backgroundColor: 'transparent' }}
+          >
+            <LogOut size={18} /> ออกจากระบบ
           </button>
         )}
       </div>
