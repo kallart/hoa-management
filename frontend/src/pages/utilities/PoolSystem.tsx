@@ -114,7 +114,7 @@ const PoolSystem: React.FC = () => {
   }));
 
   return (
-    <div className="page-container">
+    <div className="page-container" style={user?.role === 'VIEWER' ? { maxWidth: '800px', margin: '0 auto' } : {}}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
