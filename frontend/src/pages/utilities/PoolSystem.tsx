@@ -117,7 +117,7 @@ const PoolSystem: React.FC = () => {
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+        <button className="btn btn-primary no-print" onClick={() => setIsModalOpen(true)}>
           <Plus size={20} /> บันทึกค่าน้ำวันนี้
         </button>
       </div>
@@ -221,7 +221,7 @@ const PoolSystem: React.FC = () => {
       </div>
 
       {/* Right Column: History Table */}
-      <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="card no-print" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div className="card-header">
           <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
         </div>
