@@ -3,6 +3,7 @@ import api from '../../utils/api';
 import { Droplets, Activity, Plus, AlertCircle, Calendar, BatteryFull, Edit2, Trash2, Beaker } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, LabelList } from 'recharts';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface PoolLog {
   id: string;
@@ -24,6 +25,7 @@ const CustomLabel = (props: any) => {
 };
 
 const PoolSystem: React.FC = () => {
+  const { user } = useAuth();
   const [logs, setLogs] = useState<PoolLog[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -117,9 +119,11 @@ const PoolSystem: React.FC = () => {
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
         </div>
-        <button className="btn btn-primary no-print" onClick={() => setIsModalOpen(true)}>
-          <Plus size={20} /> บันทึกค่าน้ำวันนี้
-        </button>
+        {user?.role !== 'VIEWER' && (
+          <button className="btn btn-primary no-print" onClick={() => setIsModalOpen(true)}>
+            <Plus size={20} /> บันทึกค่าน้ำวันนี้
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '20px', marginBottom: '30px' }}>
@@ -221,62 +225,64 @@ const PoolSystem: React.FC = () => {
       </div>
 
       {/* Right Column: History Table */}
-      <div className="card no-print" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div className="card-header">
-          <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
-        </div>
-        <div className="card-body p-0" style={{ maxHeight: '450px', overflowY: 'auto' }}>
-          <table className="table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-            <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F9FAFB', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <tr>
-                <th>วันที่</th>
-                <th>คลอรีน (Cl)</th>
-                <th>ความเป็นกรดด่าง (pH)</th>
-                <th>เกลือ (Salt)</th>
-                <th>หมายเหตุ</th>
-                <th style={{ width: '80px', textAlign: 'center' }}>จัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.length === 0 ? (
+      {user?.role !== 'VIEWER' && (
+        <div className="card no-print" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <div className="card-header">
+            <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
+          </div>
+          <div className="card-body p-0" style={{ maxHeight: '450px', overflowY: 'auto' }}>
+            <table className="table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F9FAFB', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>ยังไม่มีประวัติการบันทึก</td>
+                  <th>วันที่</th>
+                  <th>คลอรีน (Cl)</th>
+                  <th>ความเป็นกรดด่าง (pH)</th>
+                  <th>เกลือ (Salt)</th>
+                  <th>หมายเหตุ</th>
+                  <th style={{ width: '80px', textAlign: 'center' }}>จัดการ</th>
                 </tr>
-              ) : (
-                [...logs].reverse().map(log => (
-                  <tr key={log.id}>
-                    <td>{new Date(log.date).toLocaleDateString('th-TH')}</td>
-                    <td><span style={{ color: log.cl < 1 || log.cl > 3 ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{log.cl}</span> ppm</td>
-                    <td><span style={{ color: log.ph < 7.2 || log.ph > 7.8 ? '#EF4444' : '#3B82F6', fontWeight: 'bold' }}>{log.ph}</span></td>
-                    <td>{log.salt} ppt</td>
-                    <td>{log.notes || '-'}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                        <button 
-                          className="btn-icon" 
-                          title="แก้ไข" 
-                          onClick={() => handleEdit(log)}
-                          style={{ color: '#6B7280', padding: '4px' }}
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          className="btn-icon" 
-                          title="ลบ" 
-                          onClick={() => handleDelete(log.id)}
-                          style={{ color: '#EF4444', padding: '4px' }}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>ยังไม่มีประวัติการบันทึก</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  [...logs].reverse().map(log => (
+                    <tr key={log.id}>
+                      <td>{new Date(log.date).toLocaleDateString('th-TH')}</td>
+                      <td><span style={{ color: log.cl < 1 || log.cl > 3 ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{log.cl}</span> ppm</td>
+                      <td><span style={{ color: log.ph < 7.2 || log.ph > 7.8 ? '#EF4444' : '#3B82F6', fontWeight: 'bold' }}>{log.ph}</span></td>
+                      <td>{log.salt} ppt</td>
+                      <td>{log.notes || '-'}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                          <button 
+                            className="btn-icon" 
+                            title="แก้ไข" 
+                            onClick={() => handleEdit(log)}
+                            style={{ color: '#6B7280', padding: '4px' }}
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            className="btn-icon" 
+                            title="ลบ" 
+                            onClick={() => handleDelete(log.id)}
+                            style={{ color: '#EF4444', padding: '4px' }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
       </div>
 
 
