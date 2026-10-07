@@ -126,17 +126,9 @@ const PoolSystem: React.FC = () => {
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
         </div>
-        {user?.role !== 'VIEWER' ? (
+        {user?.role !== 'VIEWER' && (
           <button className="btn btn-primary no-print" onClick={() => setIsModalOpen(true)}>
             <Plus size={20} /> บันทึกค่าน้ำวันนี้
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary no-print" 
-            onClick={handleLogout}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', borderColor: '#EF4444', backgroundColor: 'transparent' }}
-          >
-            <LogOut size={18} /> ออกจากระบบ
           </button>
         )}
       </div>
@@ -240,36 +232,38 @@ const PoolSystem: React.FC = () => {
       </div>
 
       {/* Right Column: History Table */}
-      {user?.role !== 'VIEWER' && (
-        <div className="card no-print" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <div className="card-header">
-            <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
-          </div>
-          <div className="card-body p-0" style={{ maxHeight: '450px', overflowY: 'auto' }}>
-            <table className="table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-              <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F9FAFB', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                <tr>
-                  <th>วันที่</th>
-                  <th>คลอรีน (Cl)</th>
-                  <th>ความเป็นกรดด่าง (pH)</th>
-                  <th>เกลือ (Salt)</th>
-                  <th>หมายเหตุ</th>
+      <div className="card no-print" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="card-header">
+          <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
+        </div>
+        <div className="card-body p-0" style={{ maxHeight: '450px', overflowY: 'auto' }}>
+          <table className="table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F9FAFB', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+              <tr>
+                <th>วันที่</th>
+                <th>คลอรีน (Cl)</th>
+                <th>ความเป็นกรดด่าง (pH)</th>
+                <th>เกลือ (Salt)</th>
+                <th>หมายเหตุ</th>
+                {user?.role !== 'VIEWER' && (
                   <th style={{ width: '80px', textAlign: 'center' }}>จัดการ</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan={user?.role !== 'VIEWER' ? 6 : 5} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>ยังไม่มีประวัติการบันทึก</td>
                 </tr>
-              </thead>
-              <tbody>
-                {logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>ยังไม่มีประวัติการบันทึก</td>
-                  </tr>
-                ) : (
-                  [...logs].reverse().map(log => (
-                    <tr key={log.id}>
-                      <td>{new Date(log.date).toLocaleDateString('th-TH')}</td>
-                      <td><span style={{ color: log.cl < 1 || log.cl > 3 ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{log.cl}</span> ppm</td>
-                      <td><span style={{ color: log.ph < 7.2 || log.ph > 7.8 ? '#EF4444' : '#3B82F6', fontWeight: 'bold' }}>{log.ph}</span></td>
-                      <td>{log.salt} ppt</td>
-                      <td>{log.notes || '-'}</td>
+              ) : (
+                [...logs].reverse().map(log => (
+                  <tr key={log.id}>
+                    <td>{new Date(log.date).toLocaleDateString('th-TH')}</td>
+                    <td><span style={{ color: log.cl < 1 || log.cl > 3 ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{log.cl}</span> ppm</td>
+                    <td><span style={{ color: log.ph < 7.2 || log.ph > 7.8 ? '#EF4444' : '#3B82F6', fontWeight: 'bold' }}>{log.ph}</span></td>
+                    <td>{log.salt} ppt</td>
+                    <td>{log.notes || '-'}</td>
+                    {user?.role !== 'VIEWER' && (
                       <td style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                           <button 
@@ -290,15 +284,27 @@ const PoolSystem: React.FC = () => {
                           </button>
                         </div>
                       </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+
+      {user?.role === 'VIEWER' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px', paddingBottom: '30px' }}>
+          <button 
+            className="btn btn-secondary no-print" 
+            onClick={handleLogout}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', borderColor: '#EF4444', backgroundColor: 'white', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold' }}
+          >
+            <LogOut size={20} /> ออกจากระบบ
+          </button>
         </div>
       )}
-      </div>
 
 
       {/* Modal Form */}
