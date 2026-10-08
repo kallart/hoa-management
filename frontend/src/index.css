@@ -343,6 +343,10 @@ button {
   .charts-grid {
     grid-template-columns: 1fr;
   }
+  
+  .page-container {
+    padding: 15px;
+  }
 }
 
 .mobile-menu-btn {

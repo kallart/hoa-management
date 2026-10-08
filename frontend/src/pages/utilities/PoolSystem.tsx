@@ -122,7 +122,7 @@ const PoolSystem: React.FC = () => {
   }));
 
   return (
-    <div className="page-container" style={isViewer ? { maxWidth: '800px', margin: '0 auto' } : {}}>
+    <div className="page-container" style={{ ...(isViewer ? { maxWidth: '800px', margin: '0 auto' } : {}), overflowX: 'hidden', boxSizing: 'border-box' }}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
@@ -146,38 +146,38 @@ const PoolSystem: React.FC = () => {
             </span>
           </div>
           
-          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '10px 15px', borderRadius: '8px', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-            <AlertCircle size={20} />
-            <span><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 น. ถึง วันอังคาร 16:00 น.</span>
+          <div style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', padding: '10px 15px', borderRadius: '8px', fontSize: '1.1rem', display: 'flex', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
+            <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span style={{ flex: 1, minWidth: '200px' }}><strong>แจ้งวันเปิดปิดสระว่ายน้ำประจำสัปดาห์:</strong> ปิดทุกวันอาทิตย์ 19:00 น. ถึง วันอังคาร 16:00 น.</span>
           </div>
 
           {/* Small Data Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '15px' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
-              <p style={{ color: '#6B7280', margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>SALT (เกลือ)</p>
+              <p style={{ color: '#6B7280', margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold' }}>SALT (เกลือ)</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Droplets size={32} color="#10B981" />
+                <Droplets size={32} color="#10B981" style={{ flexShrink: 0 }} />
                 <h2 style={{ margin: 0, fontSize: '2.6rem', color: '#1F2937', lineHeight: 1 }}>{latestLog?.salt || 0} <span style={{ fontSize: '1.2rem', color: '#6B7280', fontWeight: 'normal' }}>ppt</span></h2>
               </div>
-              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 2.5-4.5</p>
+              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto' }}>ค่าปกติ: 2.5-4.5</p>
             </div>
 
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
-              <p style={{ color: '#6B7280', margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CHLORINE (คลอรีน)</p>
+              <p style={{ color: '#6B7280', margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold' }}>CHLORINE (คลอรีน)</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Activity size={32} color="#3B82F6" />
+                <Activity size={32} color="#3B82F6" style={{ flexShrink: 0 }} />
                 <h2 style={{ margin: 0, fontSize: '2.6rem', color: '#1F2937', lineHeight: 1 }}>{latestLog?.cl || 0} <span style={{ fontSize: '1.2rem', color: '#6B7280', fontWeight: 'normal' }}>ppm</span></h2>
               </div>
-              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 1.0-3.0</p>
+              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: '#6B7280', backgroundColor: '#F3F4F6', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto' }}>ค่าปกติ: 1.0-3.0</p>
             </div>
 
             <div style={{ backgroundColor: '#1E3A8A', color: 'white', borderRadius: '16px', padding: '20px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '160px' }}>
-              <p style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>PH LEVEL</p>
+              <p style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 'bold', opacity: 0.8 }}>PH LEVEL</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Beaker size={32} color="#93C5FD" />
+                <Beaker size={32} color="#93C5FD" style={{ flexShrink: 0 }} />
                 <h2 style={{ margin: 0, fontSize: '2.6rem', lineHeight: 1 }}>{latestLog?.ph || 0}</h2>
               </div>
-              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto', whiteSpace: 'nowrap' }}>ค่าปกติ: 7.2-7.6</p>
+              <p style={{ margin: '20px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', textAlign: 'center', marginTop: 'auto' }}>ค่าปกติ: 7.2-7.6</p>
             </div>
           </div>
 
