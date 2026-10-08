@@ -18,7 +18,7 @@ const UtilitiesLayout = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const isViewerPool = user?.role === 'VIEWER' && location.pathname === '/utilities/pool';
+  const isViewerPool = (!user || user?.role === 'VIEWER') && location.pathname === '/utilities/pool';
 
   return (
     <div className="app-container">

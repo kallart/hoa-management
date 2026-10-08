@@ -28,6 +28,7 @@ const CustomLabel = (props: any) => {
 const PoolSystem: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isViewer = !user || user.role === 'VIEWER';
   const [logs, setLogs] = useState<PoolLog[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -121,12 +122,12 @@ const PoolSystem: React.FC = () => {
   }));
 
   return (
-    <div className="page-container" style={user?.role === 'VIEWER' ? { maxWidth: '800px', margin: '0 auto' } : {}}>
+    <div className="page-container" style={isViewer ? { maxWidth: '800px', margin: '0 auto' } : {}}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ paddingTop: '5px' }}>
           <h1 className="h1" style={{ margin: 0, lineHeight: 1 }}>สระว่ายน้ำส่วนกลาง หมู่บ้านจัดสรร รอยัลราชาวดี</h1>
         </div>
-        {user?.role !== 'VIEWER' && (
+        {!isViewer && (
           <button className="btn btn-primary no-print" onClick={() => setIsModalOpen(true)}>
             <Plus size={20} /> บันทึกค่าน้ำวันนี้
           </button>
@@ -232,7 +233,7 @@ const PoolSystem: React.FC = () => {
       </div>
 
       {/* Right Column: History Table */}
-      {user?.role !== 'VIEWER' && (
+      {!isViewer && (
         <div className="card no-print" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div className="card-header">
             <h2 className="h2" style={{ margin: 0 }}>ประวัติการบันทึกค่าน้ำ</h2>
@@ -292,15 +293,25 @@ const PoolSystem: React.FC = () => {
       )}
       </div>
 
-      {user?.role === 'VIEWER' && (
+      {isViewer && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingBottom: '30px' }}>
-          <button 
-            className="btn btn-secondary no-print" 
-            onClick={handleLogout}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', borderColor: '#EF4444', backgroundColor: 'white', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold' }}
-          >
-            <LogOut size={20} /> ออกจากระบบ
-          </button>
+          {user ? (
+            <button 
+              className="btn btn-secondary no-print" 
+              onClick={handleLogout}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', borderColor: '#EF4444', backgroundColor: 'white', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold' }}
+            >
+              <LogOut size={20} /> ออกจากระบบ
+            </button>
+          ) : (
+            <button 
+              className="btn btn-primary no-print" 
+              onClick={() => navigate('/login')}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold' }}
+            >
+              เข้าสู่ระบบ (สำหรับนิติบุคคล)
+            </button>
+          )}
         </div>
       )}
 
