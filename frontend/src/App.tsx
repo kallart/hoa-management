@@ -67,7 +67,7 @@ function App() {
           </Route>
           
           {/* Utilities System */}
-          <Route path="/utilities" element={<PrivateRoute><UtilitiesLayout /></PrivateRoute>}>
+          <Route path="/utilities" element={<UtilitiesLayout />}>
             <Route index element={<Navigate to="/utilities/dashboard" replace />} />
             <Route path="dashboard" element={<AdminRoute><UtilitiesDashboard /></AdminRoute>} />
             <Route path="pool" element={<PoolSystem />} />
