@@ -91,6 +91,11 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Middleware
 const authenticateToken = (req: any, res: any, next: any) => {
+  // Allow public access to GET pool-quality
+  if (req.originalUrl === '/api/pool-quality' && req.method === 'GET') {
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
