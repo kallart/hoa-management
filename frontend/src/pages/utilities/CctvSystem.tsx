@@ -459,86 +459,147 @@ export default function CctvSystem() {
       {/* Edit Modal */}
       {isModalOpen && selectedCamera && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', width: '92%' }}>
             <div className="modal-header">
-              <h2 className="h2" style={{ margin: 0 }}>อัปเดตสถานะ {selectedCamera.cameraNumber}</h2>
-              <button className="btn-close" onClick={() => setIsModalOpen(false)}>×</button>
+              <div>
+                <h2 className="h2" style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: '#0F172A' }}>
+                  อัปเดตสถานะ {selectedCamera.cameraNumber}
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748B' }}>
+                  จุดติดตั้ง: <strong style={{ color: '#334155' }}>{selectedCamera.location}</strong>
+                </p>
+              </div>
+              <button 
+                type="button" 
+                className="btn-icon" 
+                onClick={() => setIsModalOpen(false)}
+                title="ปิด"
+              >
+                ✕
+              </button>
             </div>
             
-            <form onSubmit={handleUpdate}>
-              <div className="modal-body">
-                <div style={{ marginBottom: '15px' }}>
-                  <label className="form-label">จุดติดตั้ง</label>
-                  <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>{selectedCamera.location}</p>
-                </div>
-                
-                <div style={{ marginBottom: '15px' }}>
-                  <label className="form-label">สถานะกล้อง</label>
-                  <select className="form-input" value={updateStatus} onChange={(e) => setUpdateStatus(e.target.value)}>
-                    <option value="normal">✅ ทำงานปกติ</option>
-                    <option value="warning">⚠️ ขัดข้องบางส่วน (เช่น ภาพติดแต่โซล่าร์ไม่ชาร์จ)</option>
-                    <option value="offline">❌ ออฟไลน์ / เปิดไม่ติด</option>
-                  </select>
-                </div>
-                
-                <div style={{ marginBottom: '15px' }}>
-                  <label className="form-label">ระบบจ่ายไฟ</label>
-                  <select className="form-input" value={updatePower} onChange={(e) => setUpdatePower(e.target.value)}>
+            <form onSubmit={handleUpdate} className="modal-body" style={{ padding: '24px 30px' }}>
+              <div className="form-group" style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                  สถานะการทำงาน
+                </label>
+                <select 
+                  className="form-control" 
+                  value={updateStatus} 
+                  onChange={(e) => setUpdateStatus(e.target.value)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value="normal">✅ ทำงานปกติ</option>
+                  <option value="warning">⚠️ ขัดข้องบางส่วน (เช่น ภาพติดแต่โซล่าร์ไม่ชาร์จ)</option>
+                  <option value="offline">❌ ออฟไลน์ / เปิดไม่ติด</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '18px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                    ระบบจ่ายไฟ
+                  </label>
+                  <select 
+                    className="form-control" 
+                    value={updatePower} 
+                    onChange={(e) => setUpdatePower(e.target.value)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <option value="solar">☀️ โซล่าร์เซลล์</option>
                     <option value="grid">⚡ ไฟบ้าน (Grid)</option>
                   </select>
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label className="form-label">สถานะประกัน</label>
-                  <select className="form-input" value={updateWarranty} onChange={(e) => setUpdateWarranty(e.target.value)}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                    สถานะประกัน
+                  </label>
+                  <select 
+                    className="form-control" 
+                    value={updateWarranty} 
+                    onChange={(e) => setUpdateWarranty(e.target.value)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <option value="อยู่ในประกัน">🛡️ อยู่ในประกัน</option>
                     <option value="หมดประกัน">⏳ หมดประกัน</option>
                   </select>
                 </div>
-                
-                <div style={{ marginBottom: '15px' }}>
-                  <label className="form-label">อาการเสีย / หมายเหตุกำกับกล้อง</label>
-                  <textarea 
-                    className="form-input" 
-                    rows={2} 
-                    value={updateNotes} 
-                    onChange={(e) => setUpdateNotes(e.target.value)}
-                    placeholder="เช่น เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้"
-                  />
-                </div>
-                
-                <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '20px 0' }} />
-                
-                <div style={{ marginBottom: '15px' }}>
-                  <label className="form-label" style={{ color: '#4F46E5' }}>เพิ่มประวัติการซ่อมบำรุง (Log)</label>
-                  <p style={{ fontSize: '0.85rem', color: '#6B7280', margin: '0 0 8px 0' }}>หากมีการเข้าไปซ่อมแซม สามารถบันทึกรายละเอียดไว้เป็นประวัติได้</p>
-                  <textarea 
-                    className="form-input" 
-                    rows={3} 
-                    value={logDescription} 
-                    onChange={(e) => setLogDescription(e.target.value)}
-                    placeholder="รายละเอียดสิ่งที่ดำเนินการแก้ไข (เช่น เปลี่ยนแบตเตอรี่, ย้ายจุดรับแสง)"
-                  />
-                </div>
-                
-                {selectedCamera.maintenanceLogs?.length > 0 && (
-                  <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
-                    <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem' }}>ประวัติล่าสุด</h4>
-                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.85rem', color: '#4B5563' }}>
-                      {selectedCamera.maintenanceLogs.slice(0, 3).map((log: any) => (
-                        <li key={log.id} style={{ marginBottom: '5px' }}>
-                          <strong>{new Date(log.createdAt).toLocaleDateString('th-TH')}:</strong> {log.description}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
               
-              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>ยกเลิก</button>
-                <button type="submit" className="btn btn-primary">บันทึกข้อมูล</button>
+              <div className="form-group" style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                  อาการเสีย / หมายเหตุกำกับกล้อง
+                </label>
+                <textarea 
+                  className="form-control" 
+                  rows={2} 
+                  value={updateNotes} 
+                  onChange={(e) => setUpdateNotes(e.target.value)}
+                  placeholder="เช่น เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้"
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+              
+              <div style={{ 
+                backgroundColor: '#F8FAFC', 
+                padding: '16px 18px', 
+                borderRadius: '10px', 
+                border: '1px solid #E2E8F0',
+                marginBottom: '20px' 
+              }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4F46E5', marginBottom: '4px' }}>
+                  📝 เพิ่มประวัติการซ่อมบำรุง (Log)
+                </label>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 10px 0' }}>
+                  หากมีการเข้าไปซ่อมแซม สามารถบันทึกรายละเอียดไว้เป็นประวัติได้
+                </p>
+                <textarea 
+                  className="form-control" 
+                  rows={2} 
+                  value={logDescription} 
+                  onChange={(e) => setLogDescription(e.target.value)}
+                  placeholder="รายละเอียดสิ่งที่ดำเนินการแก้ไข (เช่น เปลี่ยนแบตเตอรี่, ย้ายจุดรับแสง)"
+                  style={{ backgroundColor: '#FFFFFF', resize: 'vertical' }}
+                />
+              </div>
+              
+              {selectedCamera.maintenanceLogs?.length > 0 && (
+                <div style={{ 
+                  marginBottom: '20px', 
+                  padding: '14px 16px', 
+                  backgroundColor: '#FFFFFF', 
+                  borderRadius: '8px', 
+                  border: '1px solid #F1F5F9' 
+                }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>
+                    ประวัติการซ่อมบำรุงล่าสุด
+                  </h4>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.85rem', color: '#334155' }}>
+                    {selectedCamera.maintenanceLogs.slice(0, 3).map((log: any) => (
+                      <li key={log.id} style={{ marginBottom: '4px' }}>
+                        <strong>{new Date(log.createdAt).toLocaleDateString('th-TH')}:</strong> {log.description}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                >
+                  บันทึกข้อมูล
+                </button>
               </div>
             </form>
           </div>
