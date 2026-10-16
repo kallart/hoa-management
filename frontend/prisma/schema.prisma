@@ -124,6 +124,7 @@ model CctvCamera {
   status        String               @default("normal")
   powerSource   String               @default("solar")
   warrantyStatus String?             @default("อยู่ในประกัน")
+  issue         String?
   notes         String?
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt

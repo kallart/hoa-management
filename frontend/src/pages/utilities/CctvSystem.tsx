@@ -10,11 +10,12 @@ export default function CctvSystem() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<any>(null);
+  const [updateLocation, setUpdateLocation] = useState('');
   const [updateStatus, setUpdateStatus] = useState('normal');
   const [updatePower, setUpdatePower] = useState('solar');
   const [updateWarranty, setUpdateWarranty] = useState('อยู่ในประกัน');
+  const [updateIssue, setUpdateIssue] = useState('');
   const [updateNotes, setUpdateNotes] = useState('');
-  const [logDescription, setLogDescription] = useState('');
   const [imageError, setImageError] = useState(false);
   const [mapUrl, setMapUrl] = useState<string | null>(null);
   const [uploadingMap, setUploadingMap] = useState(false);
@@ -77,11 +78,12 @@ export default function CctvSystem() {
     e.preventDefault();
     try {
       await api.put(`/api/cctv/${selectedCamera.id}`, {
+        location: updateLocation,
         status: updateStatus,
         powerSource: updatePower,
         warrantyStatus: updateWarranty,
-        notes: updateNotes,
-        logDescription: logDescription
+        issue: updateIssue,
+        notes: updateNotes
       });
       toast.success('อัปเดตข้อมูลกล้องเรียบร้อยแล้ว');
       setIsModalOpen(false);
@@ -93,11 +95,12 @@ export default function CctvSystem() {
 
   const openModal = (camera: any) => {
     setSelectedCamera(camera);
+    setUpdateLocation(camera.location || '');
     setUpdateStatus(camera.status);
     setUpdatePower(camera.powerSource);
     setUpdateWarranty(camera.warrantyStatus || 'อยู่ในประกัน');
+    setUpdateIssue(camera.issue || '');
     setUpdateNotes(camera.notes || '');
-    setLogDescription('');
     setIsModalOpen(true);
   };
 
@@ -363,7 +366,8 @@ export default function CctvSystem() {
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>แหล่งจ่ายไฟ</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>สถานะประกัน</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>ตรวจสอบล่าสุด</th>
-                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>หมายเหตุล่าสุด</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>อาการเสีย</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>หมายเหตุ</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem', textAlign: 'center', width: '80px' }}>จัดการ</th>
               </tr>
             </thead>
@@ -418,7 +422,10 @@ export default function CctvSystem() {
                       )}
                     </div>
                   </td>
-                  <td style={{ padding: '16px 20px', color: camera.notes ? '#EF4444' : '#6B7280' }}>
+                  <td style={{ padding: '16px 20px', color: camera.issue ? '#DC2626' : '#94A3B8', fontWeight: camera.issue ? 500 : 400 }}>
+                    {camera.issue || '-'}
+                  </td>
+                  <td style={{ padding: '16px 20px', color: '#475569' }}>
                     {camera.notes || '-'}
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'center' }}>
@@ -446,7 +453,7 @@ export default function CctvSystem() {
               ))}
               {filteredCameras.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>
                     ไม่พบข้อมูลกล้องวงจรปิด
                   </td>
                 </tr>
@@ -458,15 +465,15 @@ export default function CctvSystem() {
 
       {/* Edit Modal */}
       {isModalOpen && selectedCamera && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+        <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }} onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', width: '92%' }}>
             <div className="modal-header">
               <div>
-                <h2 className="h2" style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: '#0F172A' }}>
-                  อัปเดตสถานะ {selectedCamera.cameraNumber}
+                <h2 className="h2" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0F172A' }}>
+                  แก้ไขข้อมูล {selectedCamera.cameraNumber}
                 </h2>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748B' }}>
-                  จุดติดตั้ง: <strong style={{ color: '#334155' }}>{selectedCamera.location}</strong>
+                <p style={{ margin: '3px 0 0 0', fontSize: '0.85rem', color: '#64748B' }}>
+                  อัปเดตจุดติดตั้ง สถานะ และบันทึกประวัติการดูแล
                 </p>
               </div>
               <button 
@@ -479,26 +486,40 @@ export default function CctvSystem() {
               </button>
             </div>
             
-            <form onSubmit={handleUpdate} className="modal-body" style={{ padding: '24px 30px' }}>
-              <div className="form-group" style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
-                  สถานะการทำงาน
+            <form onSubmit={handleUpdate} className="modal-body" style={{ padding: '20px 24px' }}>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                  จุดติดตั้ง
                 </label>
-                <select 
+                <input 
+                  type="text" 
                   className="form-control" 
-                  value={updateStatus} 
-                  onChange={(e) => setUpdateStatus(e.target.value)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value="normal">✅ ทำงานปกติ</option>
-                  <option value="warning">⚠️ ขัดข้องบางส่วน (เช่น ภาพติดแต่โซล่าร์ไม่ชาร์จ)</option>
-                  <option value="offline">❌ ออฟไลน์ / เปิดไม่ติด</option>
-                </select>
+                  value={updateLocation} 
+                  onChange={(e) => setUpdateLocation(e.target.value)}
+                  placeholder="เช่น หน้าป้อม รปภ (ซ้าย)"
+                  required
+                />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '18px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                    สถานะการทำงาน
+                  </label>
+                  <select 
+                    className="form-control" 
+                    value={updateStatus} 
+                    onChange={(e) => setUpdateStatus(e.target.value)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <option value="normal">✅ ปกติ</option>
+                    <option value="warning">⚠️ ขัดข้องบางส่วน</option>
+                    <option value="offline">❌ ออฟไลน์</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                     ระบบจ่ายไฟ
                   </label>
                   <select 
@@ -511,82 +532,101 @@ export default function CctvSystem() {
                     <option value="grid">⚡ ไฟบ้าน (Grid)</option>
                   </select>
                 </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
-                    สถานะประกัน
-                  </label>
-                  <select 
-                    className="form-control" 
-                    value={updateWarranty} 
-                    onChange={(e) => setUpdateWarranty(e.target.value)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <option value="อยู่ในประกัน">🛡️ อยู่ในประกัน</option>
-                    <option value="หมดประกัน">⏳ หมดประกัน</option>
-                  </select>
-                </div>
               </div>
-              
-              <div className="form-group" style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
-                  อาการเสีย / หมายเหตุกำกับกล้อง
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                  สถานะประกัน
+                </label>
+                <select 
+                  className="form-control" 
+                  value={updateWarranty} 
+                  onChange={(e) => setUpdateWarranty(e.target.value)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value="อยู่ในประกัน">🛡️ อยู่ในประกัน</option>
+                  <option value="หมดประกัน">⏳ หมดประกัน</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                  อาการเสีย (ถ้ามี)
+                </label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={updateIssue} 
+                  onChange={(e) => setUpdateIssue(e.target.value)}
+                  placeholder="เช่น เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้, เปิดไม่ติด ชาร์จไม่เข้า"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                  หมายเหตุ
                 </label>
                 <textarea 
                   className="form-control" 
                   rows={2} 
                   value={updateNotes} 
                   onChange={(e) => setUpdateNotes(e.target.value)}
-                  placeholder="เช่น เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้"
+                  placeholder="เช่น ทำความสะอาดแผงโซล่าร์แล้ว, เปลี่ยนแบตเตอรี่ใหม่, รอนัดช่างเข้าดู..."
                   style={{ resize: 'vertical' }}
                 />
               </div>
-              
-              <div style={{ 
-                backgroundColor: '#F8FAFC', 
-                padding: '16px 18px', 
-                borderRadius: '10px', 
-                border: '1px solid #E2E8F0',
-                marginBottom: '20px' 
-              }}>
-                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4F46E5', marginBottom: '4px' }}>
-                  📝 เพิ่มประวัติการซ่อมบำรุง (Log)
-                </label>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 10px 0' }}>
-                  หากมีการเข้าไปซ่อมแซม สามารถบันทึกรายละเอียดไว้เป็นประวัติได้
-                </p>
-                <textarea 
-                  className="form-control" 
-                  rows={2} 
-                  value={logDescription} 
-                  onChange={(e) => setLogDescription(e.target.value)}
-                  placeholder="รายละเอียดสิ่งที่ดำเนินการแก้ไข (เช่น เปลี่ยนแบตเตอรี่, ย้ายจุดรับแสง)"
-                  style={{ backgroundColor: '#FFFFFF', resize: 'vertical' }}
-                />
-              </div>
-              
-              {selectedCamera.maintenanceLogs?.length > 0 && (
+
+              {/* Log History */}
+              {selectedCamera.maintenanceLogs && selectedCamera.maintenanceLogs.length > 0 && (
                 <div style={{ 
-                  marginBottom: '20px', 
-                  padding: '14px 16px', 
-                  backgroundColor: '#FFFFFF', 
+                  marginTop: '12px',
+                  padding: '12px 14px', 
+                  backgroundColor: '#F8FAFC', 
                   borderRadius: '8px', 
-                  border: '1px solid #F1F5F9' 
+                  border: '1px solid #E2E8F0' 
                 }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>
-                    ประวัติการซ่อมบำรุงล่าสุด
-                  </h4>
-                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.85rem', color: '#334155' }}>
-                    {selectedCamera.maintenanceLogs.slice(0, 3).map((log: any) => (
-                      <li key={log.id} style={{ marginBottom: '4px' }}>
-                        <strong>{new Date(log.createdAt).toLocaleDateString('th-TH')}:</strong> {log.description}
-                      </li>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>
+                      📋 ประวัติหมายเหตุ / การบันทึกย้อนหลัง
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                      {selectedCamera.maintenanceLogs.length} รายการ
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
+                    {selectedCamera.maintenanceLogs.map((log: any) => (
+                      <div key={log.id} style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '6px 10px', 
+                        backgroundColor: '#FFFFFF', 
+                        borderRadius: '6px',
+                        border: '1px solid #F1F5F9',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, color: '#334155' }}>
+                            {new Date(log.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} {new Date(log.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+                          </span>
+                          <span style={{ 
+                            fontSize: '0.7rem', 
+                            padding: '1px 6px', 
+                            borderRadius: '4px',
+                            backgroundColor: log.status === 'normal' ? '#D1FAE5' : log.status === 'warning' ? '#FEF3C7' : '#FEE2E2',
+                            color: log.status === 'normal' ? '#065F46' : log.status === 'warning' ? '#92400E' : '#991B1B'
+                          }}>
+                            {log.status === 'normal' ? 'ปกติ' : log.status === 'warning' ? 'ขัดข้อง' : 'ออฟไลน์'}
+                          </span>
+                        </div>
+                        <span style={{ color: '#64748B' }}>{log.description}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
-              
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button 
                   type="button" 
                   className="btn btn-secondary" 

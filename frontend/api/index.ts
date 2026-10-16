@@ -707,22 +707,33 @@ app.get('/api/cctv', async (req, res) => {
 app.put('/api/cctv/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes, powerSource, warrantyStatus, logDescription } = req.body;
+    const { location, status, notes, powerSource, warrantyStatus, issue, logDescription } = req.body;
     
+    const existing = await prisma.cctvCamera.findUnique({ where: { id } });
+
+    // Determine if we should record a log
+    const logText = (logDescription && logDescription.trim())
+      ? logDescription.trim()
+      : (notes !== undefined && notes.trim() !== '' && notes.trim() !== (existing?.notes || '').trim())
+        ? notes.trim()
+        : null;
+
     // Update camera
     const camera = await prisma.cctvCamera.update({
       where: { id },
       data: {
-        status,
-        notes,
-        powerSource,
-        warrantyStatus,
+        ...(location !== undefined ? { location } : {}),
+        ...(status !== undefined ? { status } : {}),
+        ...(powerSource !== undefined ? { powerSource } : {}),
+        ...(warrantyStatus !== undefined ? { warrantyStatus } : {}),
+        ...(issue !== undefined ? { issue } : {}),
+        ...(notes !== undefined ? { notes } : {}),
         updatedAt: new Date(),
-        ...(logDescription ? {
+        ...(logText ? {
           maintenanceLogs: {
             create: {
-              status: status,
-              description: logDescription
+              status: status || existing?.status || 'normal',
+              description: logText
             }
           }
         } : {})
@@ -732,6 +743,7 @@ app.put('/api/cctv/:id', requireAdmin, async (req, res) => {
     
     res.json(camera);
   } catch (error) {
+    console.error('Update CCTV error:', error);
     res.status(500).json({ error: 'Failed to update CCTV camera' });
   }
 });
@@ -751,20 +763,22 @@ app.post('/api/cctv/seed', requireAdmin, async (req, res) => {
       let location = `จุดที่ ${num}`;
       let status = 'normal';
       let powerSource = 'solar';
+      let warrantyStatus = 'อยู่ในประกัน';
+      let issue = '';
       let notes = '';
 
       // Specific conditions based on user map (14 normal, 4 issues, 18 solar)
       if (num === 1) { location = 'หน้าป้อม รปภ (ซ้าย)'; }
-      if (num === 2) { location = 'หน้าป้อม รปภ (กลาง)'; status = 'warning'; notes = '2.เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; }
-      if (num === 3) { location = 'หน้าป้อม รปภ (ขวา)'; status = 'offline'; notes = '3.เปิดไม่ติด ชาร์จไม่เข้า'; }
+      if (num === 2) { location = 'หน้าป้อม รปภ (กลาง)'; status = 'warning'; issue = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; }
+      if (num === 3) { location = 'หน้าป้อม รปภ (ขวา)'; status = 'offline'; issue = 'เปิดไม่ติด ชาร์จไม่เข้า'; }
       if (num === 4) { location = 'ทางเข้าหลัก (หลังป้อม)'; }
       if (num === 5) { location = 'ซอย 405/2 - 405/8 (ต้นซอย)'; }
-      if (num === 6) { location = 'ซอย 405/9 - 405/13'; status = 'warning'; notes = '1.เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; }
+      if (num === 6) { location = 'ซอย 405/9 - 405/13'; status = 'warning'; issue = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; }
       if (num === 7) { location = 'ท้ายซอย 405/14'; }
       if (num === 8) { location = 'กลางซอย 405/24 - 405/25'; }
       if (num === 9) { location = 'ท้ายซอย 405/31'; }
       if (num === 10) { location = 'ท้ายซอย 405/36 (ขวา)'; }
-      if (num === 11) { location = 'ท้ายซอย 405/36 (ซ้าย)'; status = 'offline'; notes = '6.เปิดไม่ติด ชาร์จไม่เข้า'; }
+      if (num === 11) { location = 'ท้ายซอย 405/36 (ซ้าย)'; status = 'offline'; issue = 'เปิดไม่ติด ชาร์จไม่เข้า'; }
       if (num === 12) { location = 'ท้ายซอย 405/40'; }
       if (num === 13) { location = 'มุมซอย 405/41'; }
       if (num === 14) { location = 'ท้ายซอย 405/47'; }
@@ -778,6 +792,8 @@ app.post('/api/cctv/seed', requireAdmin, async (req, res) => {
         location,
         status,
         powerSource,
+        warrantyStatus,
+        issue,
         notes
       };
     });
