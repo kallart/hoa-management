@@ -116,53 +116,153 @@ export default function CctvSystem() {
 
   return (
     <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 className="h1">ระบบบำรุงรักษากล้องวงจรปิด</h1>
-          <p className="text-muted">จัดการและติดตามสถานะการทำงานของกล้องวงจรปิดภายในหมู่บ้าน</p>
-        </div>
+      {/* Top Header / Description */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+        <p className="text-muted" style={{ margin: 0, fontSize: '0.95rem' }}>
+          จัดการและติดตามสถานะการทำงานของกล้องวงจรปิดภายในหมู่บ้าน
+        </p>
         {cameras.length === 0 && (
-          <button className="btn btn-primary" onClick={handleSeed}>สร้างข้อมูลเริ่มต้น 18 ตัว</button>
+          <button className="btn btn-primary" onClick={handleSeed} style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+            สร้างข้อมูลเริ่มต้น 18 ตัว
+          </button>
         )}
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: '#DBEAFE', color: '#3B82F6' }}><Camera size={24} /></div>
-          <div className="stat-content">
-            <p className="stat-label">กล้องทั้งหมด</p>
-            <h3 className="stat-value">{stats.total} ตัว</h3>
+      {/* Top 2-Column Section: Left Stats Cards, Right CCTV Map */}
+      <div className="cctv-top-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: '240px 1fr',
+        gap: '20px',
+        alignItems: 'stretch',
+        marginBottom: '24px'
+      }}>
+        {/* Left: 4 Stat Cards Stacked Vertically */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Card 1: กล้องทั้งหมด */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: '1px solid #E5E7EB',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              backgroundColor: '#DBEAFE',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Camera size={20} color="#2563EB" />
+            </div>
+            <div style={{ padding: '12px 16px' }}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#4B5563', fontWeight: 500 }}>
+                กล้องทั้งหมด
+              </p>
+              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 'bold', color: '#111827', lineHeight: 1.2 }}>
+                {stats.total} ตัว
+              </h3>
+            </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: '#D1FAE5', color: '#10B981' }}><CheckCircle size={24} /></div>
-          <div className="stat-content">
-            <p className="stat-label">ใช้งานได้ปกติ</p>
-            <h3 className="stat-value" style={{ color: '#10B981' }}>{stats.normal} ตัว</h3>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: '#FEF3C7', color: '#F59E0B' }}><AlertCircle size={24} /></div>
-          <div className="stat-content">
-            <p className="stat-label">มีปัญหา/ขัดข้อง</p>
-            <h3 className="stat-value" style={{ color: '#F59E0B' }}>{stats.warning + stats.offline} ตัว</h3>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: '#E0E7FF', color: '#6366F1' }}><Zap size={24} /></div>
-          <div className="stat-content">
-            <p className="stat-label">ระบบไฟ</p>
-            <h3 className="stat-value" style={{ fontSize: '1.2rem' }}>โซล่าร์: {stats.solar} / ไฟบ้าน: {stats.grid}</h3>
-          </div>
-        </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-        {/* Map Section */}
-        <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 className="h2" style={{ margin: 0 }}>แผนผังกล้องวงจรปิด (CCTV Map)</h2>
+          {/* Card 2: ใช้งานได้ปกติ */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: '1px solid #E5E7EB',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              backgroundColor: '#D1FAE5',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <CheckCircle size={20} color="#059669" />
+            </div>
+            <div style={{ padding: '12px 16px' }}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#4B5563', fontWeight: 500 }}>
+                ใช้งานได้ปกติ
+              </p>
+              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 'bold', color: '#059669', lineHeight: 1.2 }}>
+                {stats.normal} ตัว
+              </h3>
+            </div>
+          </div>
+
+          {/* Card 3: มีปัญหา/ขัดข้อง */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: '1px solid #E5E7EB',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              backgroundColor: '#FEF3C7',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <AlertCircle size={20} color="#D97706" />
+            </div>
+            <div style={{ padding: '12px 16px' }}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#4B5563', fontWeight: 500 }}>
+                มีปัญหา/ขัดข้อง
+              </p>
+              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 'bold', color: '#D97706', lineHeight: 1.2 }}>
+                {stats.warning + stats.offline} ตัว
+              </h3>
+            </div>
+          </div>
+
+          {/* Card 4: ระบบไฟ */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: '1px solid #E5E7EB',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              backgroundColor: '#E0E7FF',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Zap size={20} color="#4F46E5" />
+            </div>
+            <div style={{ padding: '12px 16px' }}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#4B5563', fontWeight: 500 }}>
+                ระบบไฟ
+              </p>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 'bold', color: '#111827', lineHeight: 1.2 }}>
+                โซล่าร์: {stats.solar} / ไฟบ้าน: {stats.grid}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: CCTV Map Card */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '10px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          border: '1px solid #E5E7EB',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 20px',
+            borderBottom: '1px solid #F3F4F6'
+          }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1E293B' }}>
+              แผนผังกล้องวงจรปิด (CCTV Map)
+            </h2>
             <div>
               <input 
                 type="file" 
@@ -171,101 +271,172 @@ export default function CctvSystem() {
                 style={{ display: 'none' }} 
                 onChange={handleMapUpload}
               />
-              <label htmlFor="mapUpload" className="btn btn-primary" style={{ cursor: 'pointer', padding: '6px 12px', fontSize: '0.9rem' }}>
+              <label 
+                htmlFor="mapUpload" 
+                style={{ 
+                  cursor: 'pointer', 
+                  fontSize: '0.8rem', 
+                  color: '#64748B', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '4px',
+                  textDecoration: 'none'
+                }}
+              >
                 {uploadingMap ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปแผนผัง'}
               </label>
             </div>
           </div>
-          <div className="card-body" style={{ padding: 0, backgroundColor: '#F3F4F6', textAlign: 'center' }}>
-            <div style={{ position: 'relative', width: '100%', overflow: 'auto', maxHeight: '600px' }}>
-              {!imageError ? (
-                <img 
-                  src={mapUrl || "/map-cctv.png"} 
-                  alt="Village Map with CCTV Locations" 
-                  style={{ width: '100%', minWidth: '800px', display: 'block' }}
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div style={{ height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#6B7280', border: '2px dashed #D1D5DB', margin: '20px', borderRadius: '12px', backgroundColor: 'white' }}>
-                  <AlertCircle size={48} style={{ marginBottom: '15px', color: '#9CA3AF' }} />
-                  <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#374151' }}>ยังไม่มีรูปแผนผังกล้องวงจรปิด</h3>
-                  <p style={{ margin: 0 }}>สามารถกดปุ่ม <strong>"อัปโหลดรูปแผนผัง"</strong> ด้านขวาบน</p>
-                  <p style={{ margin: '5px 0 0 0' }}>เพื่อนำรูปแผนผังของคุณ KONG ขึ้นมาแสดงได้ทันทีครับ</p>
-                </div>
-              )}
-            </div>
+          <div style={{
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+            position: 'relative',
+            overflow: 'auto',
+            maxHeight: '380px'
+          }}>
+            {!imageError ? (
+              <img 
+                src={mapUrl || "/map-cctv.png"} 
+                alt="Village Map with CCTV Locations" 
+                style={{ width: '100%', minWidth: '700px', display: 'block' }}
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div style={{
+                height: '280px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#6B7280',
+                border: '2px dashed #D1D5DB',
+                margin: '20px',
+                borderRadius: '8px',
+                backgroundColor: '#F9FAFB'
+              }}>
+                <AlertCircle size={40} style={{ marginBottom: '10px', color: '#9CA3AF' }} />
+                <h3 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#374151' }}>ยังไม่มีรูปแผนผังกล้องวงจรปิด</h3>
+                <p style={{ margin: 0, fontSize: '0.85rem' }}>สามารถกดคลิกที่ <strong>"อัปโหลดรูปแผนผัง"</strong> ด้านบนเพื่อนำรูปแผนผังขึ้นระบบได้ครับ</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Table Section: รายการกล้องวงจรปิด */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '10px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        border: '1px solid #E5E7EB',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          padding: '16px 20px',
+          borderBottom: '1px solid #F1F5F9'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#1E293B' }}>
+            รายการกล้องวงจรปิด
+          </h2>
+          <div style={{ position: 'relative', width: '260px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="ค้นหาหมายเลขหรือจุดติดตั้ง..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                paddingLeft: '36px',
+                paddingTop: '7px',
+                paddingBottom: '7px',
+                fontSize: '0.85rem',
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                boxSizing: 'border-box'
+              }}
+            />
           </div>
         </div>
 
-        {/* Table Section */}
-        <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <h2 className="h2" style={{ margin: 0 }}>รายการกล้องวงจรปิด</h2>
-            <div className="search-box" style={{ maxWidth: '300px' }}>
-              <Search size={18} className="search-icon" />
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="ค้นหาหมายเลขหรือจุดติดตั้ง..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>หมายเลข</th>
-                    <th>จุดติดตั้ง</th>
-                    <th>สถานะ</th>
-                    <th>แหล่งจ่ายไฟ</th>
-                    <th>หมายเหตุล่าสุด</th>
-                    <th style={{ width: '100px' }}>จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCameras.map((camera) => (
-                    <tr key={camera.id}>
-                      <td style={{ fontWeight: 'bold' }}>{camera.cameraNumber}</td>
-                      <td>{camera.location}</td>
-                      <td>
-                        <span style={{ 
-                          padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold',
-                          backgroundColor: camera.status === 'normal' ? '#D1FAE5' : camera.status === 'warning' ? '#FEF3C7' : '#FEE2E2',
-                          color: camera.status === 'normal' ? '#065F46' : camera.status === 'warning' ? '#92400E' : '#991B1B'
-                        }}>
-                          {camera.status === 'normal' ? 'ปกติ' : camera.status === 'warning' ? 'ขัดข้องบางส่วน' : 'ออฟไลน์'}
-                        </span>
-                      </td>
-                      <td>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', color: '#4B5563' }}>
-                          <Zap size={14} color={camera.powerSource === 'solar' ? '#F59E0B' : '#6366F1'} />
-                          {camera.powerSource === 'solar' ? 'โซล่าร์เซลล์' : 'ไฟบ้าน (Grid)'}
-                        </span>
-                      </td>
-                      <td style={{ color: camera.notes ? '#EF4444' : '#6B7280' }}>
-                        {camera.notes || '-'}
-                      </td>
-                      <td>
-                        <button className="btn btn-secondary" style={{ padding: '6px 10px' }} onClick={() => openModal(camera)}>
-                          <Edit2 size={16} /> แก้ไข
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredCameras.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>
-                        ไม่พบข้อมูลกล้องวงจรปิด
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="table-responsive" style={{ margin: 0 }}>
+          <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#FAFBFD', borderBottom: '1px solid #F1F5F9' }}>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>หมายเลข</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>จุดติดตั้ง</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>สถานะ</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>แหล่งจ่ายไฟ</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>หมายเหตุล่าสุด</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem', textAlign: 'center', width: '80px' }}>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCameras.map((camera) => (
+                <tr key={camera.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                  <td style={{ padding: '16px 20px', fontWeight: 'bold', color: '#0F172A' }}>{camera.cameraNumber}</td>
+                  <td style={{ padding: '16px 20px', color: '#334155' }}>{camera.location}</td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <span style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: '6px', 
+                      fontSize: '0.85rem', 
+                      fontWeight: 600,
+                      backgroundColor: camera.status === 'normal' ? '#D1FAE5' : camera.status === 'warning' ? '#FEF3C7' : '#FEE2E2',
+                      color: camera.status === 'normal' ? '#065F46' : camera.status === 'warning' ? '#92400E' : '#991B1B',
+                      display: 'inline-block'
+                    }}>
+                      {camera.status === 'normal' ? 'ปกติ' : camera.status === 'warning' ? 'ขัดข้องบางส่วน' : 'ออฟไลน์'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', color: '#475569' }}>
+                      <Zap size={15} color={camera.powerSource === 'solar' ? '#F59E0B' : '#6366F1'} fill={camera.powerSource === 'solar' ? '#F59E0B' : 'none'} />
+                      {camera.powerSource === 'solar' ? 'โซล่าร์เซลล์' : 'ไฟบ้าน (Grid)'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px', color: camera.notes ? '#EF4444' : '#6B7280' }}>
+                    {camera.notes || '-'}
+                  </td>
+                  <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                    <button 
+                      onClick={() => openModal(camera)}
+                      style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        display: 'inline-flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: '2px',
+                        color: '#334155',
+                        padding: '4px 8px',
+                        borderRadius: '6px'
+                      }}
+                      title="แก้ไขข้อมูลกล้อง"
+                    >
+                      <Edit2 size={16} color="#334155" />
+                      <span style={{ fontSize: '0.75rem', color: '#334155' }}>แก้ไข</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredCameras.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#6B7280' }}>
+                    ไม่พบข้อมูลกล้องวงจรปิด
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

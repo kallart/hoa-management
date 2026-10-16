@@ -751,23 +751,23 @@ app.post('/api/cctv/seed', requireAdmin, async (req, res) => {
       let powerSource = 'solar';
       let notes = '';
 
-      // Specific conditions based on user map
-      if (num === 1) { location = 'หน้าป้อม รปภ (ซ้าย)'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
-      if (num === 2) { location = 'หน้าป้อม รปภ (กลาง)'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
-      if (num === 3) { location = 'หน้าป้อม รปภ (ขวา)'; }
-      if (num === 4) { location = 'ทางเข้าหลัก (หลังป้อม)'; status = 'offline'; notes = 'เปิดไม่ติด ชาร์จไม่เข้า'; }
+      // Specific conditions based on user map (14 normal, 4 issues, 18 solar)
+      if (num === 1) { location = 'หน้าป้อม รปภ (ซ้าย)'; }
+      if (num === 2) { location = 'หน้าป้อม รปภ (กลาง)'; status = 'warning'; notes = '2.เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; }
+      if (num === 3) { location = 'หน้าป้อม รปภ (ขวา)'; status = 'offline'; notes = '3.เปิดไม่ติด ชาร์จไม่เข้า'; }
+      if (num === 4) { location = 'ทางเข้าหลัก (หลังป้อม)'; }
       if (num === 5) { location = 'ซอย 405/2 - 405/8 (ต้นซอย)'; }
-      if (num === 6) { location = 'ซอย 405/9 - 405/13'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 6) { location = 'ซอย 405/9 - 405/13'; status = 'warning'; notes = '1.เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; }
       if (num === 7) { location = 'ท้ายซอย 405/14'; }
       if (num === 8) { location = 'กลางซอย 405/24 - 405/25'; }
       if (num === 9) { location = 'ท้ายซอย 405/31'; }
-      if (num === 10) { location = 'ท้ายซอย 405/36 (ขวา)'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
-      if (num === 11) { location = 'ท้ายซอย 405/36 (ซ้าย)'; status = 'offline'; notes = 'เปิดไม่ติด ชาร์จไม่เข้า'; }
+      if (num === 10) { location = 'ท้ายซอย 405/36 (ขวา)'; }
+      if (num === 11) { location = 'ท้ายซอย 405/36 (ซ้าย)'; status = 'offline'; notes = '6.เปิดไม่ติด ชาร์จไม่เข้า'; }
       if (num === 12) { location = 'ท้ายซอย 405/40'; }
       if (num === 13) { location = 'มุมซอย 405/41'; }
       if (num === 14) { location = 'ท้ายซอย 405/47'; }
       if (num === 15) { location = 'กลางซอย 405/52'; }
-      if (num === 16) { location = 'ซอย 405/57'; status = 'warning'; notes = 'เปิดติด แต่ใช้ไฟจากโซล่าร์ไม่ได้'; powerSource = 'grid'; }
+      if (num === 16) { location = 'ซอย 405/57'; }
       if (num === 17) { location = 'ท้ายซอย 405/59'; }
       if (num === 18) { location = 'ท้ายซอย 405/62'; }
 
