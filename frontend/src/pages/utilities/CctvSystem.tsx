@@ -243,83 +243,67 @@ export default function CctvSystem() {
           </div>
         </div>
 
-        {/* Right: CCTV Map Card */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '10px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          border: '1px solid #E5E7EB',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          <div style={{
+        {/* Right: CCTV Map Card (No header, no scrollbar, fits frame) */}
+        <div 
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: '1px solid #E5E7EB',
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '12px 20px',
-            borderBottom: '1px solid #F3F4F6'
-          }}>
-            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1E293B' }}>
-              แผนผังกล้องวงจรปิด (CCTV Map)
-            </h2>
-            <div>
-              <input 
-                type="file" 
-                id="mapUpload" 
-                accept="image/*" 
-                style={{ display: 'none' }} 
-                onChange={handleMapUpload}
-              />
-              <label 
-                htmlFor="mapUpload" 
-                style={{ 
-                  cursor: 'pointer', 
-                  fontSize: '0.8rem', 
-                  color: '#64748B', 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '4px',
-                  textDecoration: 'none'
-                }}
-              >
-                {uploadingMap ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปแผนผัง'}
-              </label>
-            </div>
-          </div>
-          <div style={{
-            flex: 1,
-            backgroundColor: '#FFFFFF',
+            justifyContent: 'center',
+            overflow: 'hidden',
             position: 'relative',
-            overflow: 'auto',
-            maxHeight: '380px'
-          }}>
-            {!imageError ? (
-              <img 
-                src={mapUrl || "/map-cctv.png"} 
-                alt="Village Map with CCTV Locations" 
-                style={{ width: '100%', minWidth: '700px', display: 'block' }}
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div style={{
-                height: '280px',
+            padding: '8px'
+          }}
+          onDoubleClick={() => document.getElementById('mapUpload')?.click()}
+          title="ดับเบิ้ลคลิกเพื่ออัปโหลดรูปแผนผังใหม่"
+        >
+          <input 
+            type="file" 
+            id="mapUpload" 
+            accept="image/*" 
+            style={{ display: 'none' }} 
+            onChange={handleMapUpload}
+          />
+          {!imageError ? (
+            <img 
+              src={mapUrl || "/map-cctv.png"} 
+              alt="Village Map with CCTV Locations" 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                maxHeight: '365px', 
+                objectFit: 'contain', 
+                display: 'block' 
+              }}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div 
+              style={{
+                height: '100%',
+                minHeight: '260px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
                 color: '#6B7280',
                 border: '2px dashed #D1D5DB',
-                margin: '20px',
+                margin: '10px',
+                width: '100%',
                 borderRadius: '8px',
-                backgroundColor: '#F9FAFB'
-              }}>
-                <AlertCircle size={40} style={{ marginBottom: '10px', color: '#9CA3AF' }} />
-                <h3 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#374151' }}>ยังไม่มีรูปแผนผังกล้องวงจรปิด</h3>
-                <p style={{ margin: 0, fontSize: '0.85rem' }}>สามารถกดคลิกที่ <strong>"อัปโหลดรูปแผนผัง"</strong> ด้านบนเพื่อนำรูปแผนผังขึ้นระบบได้ครับ</p>
-              </div>
-            )}
-          </div>
+                backgroundColor: '#F9FAFB',
+                cursor: 'pointer'
+              }}
+              onClick={() => document.getElementById('mapUpload')?.click()}
+            >
+              <AlertCircle size={40} style={{ marginBottom: '10px', color: '#9CA3AF' }} />
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#374151' }}>ยังไม่มีรูปแผนผังกล้องวงจรปิด</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>คลิกเพื่ออัปโหลดรูปแผนผัง</p>
+            </div>
+          )}
         </div>
       </div>
 
