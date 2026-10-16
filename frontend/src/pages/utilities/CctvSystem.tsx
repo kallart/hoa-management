@@ -12,6 +12,7 @@ export default function CctvSystem() {
   const [selectedCamera, setSelectedCamera] = useState<any>(null);
   const [updateStatus, setUpdateStatus] = useState('normal');
   const [updatePower, setUpdatePower] = useState('solar');
+  const [updateWarranty, setUpdateWarranty] = useState('อยู่ในประกัน');
   const [updateNotes, setUpdateNotes] = useState('');
   const [logDescription, setLogDescription] = useState('');
   const [imageError, setImageError] = useState(false);
@@ -78,6 +79,7 @@ export default function CctvSystem() {
       await api.put(`/api/cctv/${selectedCamera.id}`, {
         status: updateStatus,
         powerSource: updatePower,
+        warrantyStatus: updateWarranty,
         notes: updateNotes,
         logDescription: logDescription
       });
@@ -93,6 +95,7 @@ export default function CctvSystem() {
     setSelectedCamera(camera);
     setUpdateStatus(camera.status);
     setUpdatePower(camera.powerSource);
+    setUpdateWarranty(camera.warrantyStatus || 'อยู่ในประกัน');
     setUpdateNotes(camera.notes || '');
     setLogDescription('');
     setIsModalOpen(true);
@@ -358,6 +361,7 @@ export default function CctvSystem() {
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>จุดติดตั้ง</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>สถานะ</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>แหล่งจ่ายไฟ</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>สถานะประกัน</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>ตรวจสอบล่าสุด</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>หมายเหตุล่าสุด</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem', textAlign: 'center', width: '80px' }}>จัดการ</th>
@@ -385,6 +389,19 @@ export default function CctvSystem() {
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', color: '#475569' }}>
                       <Zap size={15} color={camera.powerSource === 'solar' ? '#F59E0B' : '#6366F1'} fill={camera.powerSource === 'solar' ? '#F59E0B' : 'none'} />
                       {camera.powerSource === 'solar' ? 'โซล่าร์เซลล์' : 'ไฟบ้าน (Grid)'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <span style={{ 
+                      padding: '4px 10px', 
+                      borderRadius: '6px', 
+                      fontSize: '0.85rem', 
+                      fontWeight: 600,
+                      backgroundColor: (camera.warrantyStatus === 'อยู่ในประกัน' || !camera.warrantyStatus) ? '#E0F2FE' : '#F1F5F9',
+                      color: (camera.warrantyStatus === 'อยู่ในประกัน' || !camera.warrantyStatus) ? '#0284C7' : '#64748B',
+                      display: 'inline-block'
+                    }}>
+                      {camera.warrantyStatus || 'อยู่ในประกัน'}
                     </span>
                   </td>
                   <td style={{ padding: '16px 20px' }}>
@@ -469,6 +486,14 @@ export default function CctvSystem() {
                   <select className="form-input" value={updatePower} onChange={(e) => setUpdatePower(e.target.value)}>
                     <option value="solar">☀️ โซล่าร์เซลล์</option>
                     <option value="grid">⚡ ไฟบ้าน (Grid)</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label className="form-label">สถานะประกัน</label>
+                  <select className="form-input" value={updateWarranty} onChange={(e) => setUpdateWarranty(e.target.value)}>
+                    <option value="อยู่ในประกัน">🛡️ อยู่ในประกัน</option>
+                    <option value="หมดประกัน">⏳ หมดประกัน</option>
                   </select>
                 </div>
                 

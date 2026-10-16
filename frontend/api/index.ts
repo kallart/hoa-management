@@ -707,7 +707,7 @@ app.get('/api/cctv', async (req, res) => {
 app.put('/api/cctv/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes, powerSource, logDescription } = req.body;
+    const { status, notes, powerSource, warrantyStatus, logDescription } = req.body;
     
     // Update camera
     const camera = await prisma.cctvCamera.update({
@@ -716,6 +716,7 @@ app.put('/api/cctv/:id', requireAdmin, async (req, res) => {
         status,
         notes,
         powerSource,
+        warrantyStatus,
         updatedAt: new Date(),
         ...(logDescription ? {
           maintenanceLogs: {
