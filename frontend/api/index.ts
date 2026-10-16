@@ -716,6 +716,7 @@ app.put('/api/cctv/:id', requireAdmin, async (req, res) => {
         status,
         notes,
         powerSource,
+        updatedAt: new Date(),
         ...(logDescription ? {
           maintenanceLogs: {
             create: {

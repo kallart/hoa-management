@@ -358,6 +358,7 @@ export default function CctvSystem() {
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>จุดติดตั้ง</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>สถานะ</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>แหล่งจ่ายไฟ</th>
+                <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>ตรวจสอบล่าสุด</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem' }}>หมายเหตุล่าสุด</th>
                 <th style={{ padding: '14px 20px', color: '#94A3B8', fontWeight: 500, fontSize: '0.85rem', textAlign: 'center', width: '80px' }}>จัดการ</th>
               </tr>
@@ -385,6 +386,20 @@ export default function CctvSystem() {
                       <Zap size={15} color={camera.powerSource === 'solar' ? '#F59E0B' : '#6366F1'} fill={camera.powerSource === 'solar' ? '#F59E0B' : 'none'} />
                       {camera.powerSource === 'solar' ? 'โซล่าร์เซลล์' : 'ไฟบ้าน (Grid)'}
                     </span>
+                  </td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 500 }}>
+                        {camera.updatedAt 
+                          ? new Date(camera.updatedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                          : '-'}
+                      </span>
+                      {camera.updatedAt && (
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                          {new Date(camera.updatedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '16px 20px', color: camera.notes ? '#EF4444' : '#6B7280' }}>
                     {camera.notes || '-'}
