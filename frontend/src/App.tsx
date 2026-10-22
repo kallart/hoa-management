@@ -18,6 +18,8 @@ import UtilitiesDashboard from './pages/utilities/UtilitiesDashboard';
 import PoolSystem from './pages/utilities/PoolSystem';
 import CctvSystem from './pages/utilities/CctvSystem';
 import DummyPage from './pages/utilities/DummyPage';
+import AccountingLayout from './layouts/AccountingLayout';
+import AccountingDashboard from './pages/accounting/AccountingDashboard';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -74,6 +76,15 @@ function App() {
             <Route path="cctv" element={<AdminRoute><CctvSystem /></AdminRoute>} />
             <Route path="maintenance" element={<AdminRoute><DummyPage /></AdminRoute>} />
             <Route path="settings" element={<AdminRoute><DummyPage /></AdminRoute>} />
+          </Route>
+          
+          {/* Accounting & Finance System */}
+          <Route path="/accounting" element={<AdminRoute><AccountingLayout /></AdminRoute>}>
+            <Route index element={<AccountingDashboard />} />
+            <Route path="transactions" element={<AccountingDashboard />} />
+            <Route path="petty-cash" element={<AccountingDashboard />} />
+            <Route path="deposits" element={<AccountingDashboard />} />
+            <Route path="settings" element={<AccountingDashboard />} />
           </Route>
           
           {/* Standalone print pages */}

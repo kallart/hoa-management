@@ -139,3 +139,75 @@ model CctvMaintenanceLog {
   createdAt   DateTime   @default(now())
   camera      CctvCamera @relation(fields: [cameraId], references: [id])
 }
+
+// --- Accounting Models ---
+
+model AccountTransaction {
+  id              String                  @id @default(uuid())
+  docNumber       String                  @unique // e.g. PV-2569-0016, PC-2569-0286, RV-2569-0001
+  manualRefNo     String?                 // เลขที่อ้างอิงเดิม เช่น #15, #285
+  type            String                  // EXPENSE or INCOME
+  subType         String                  // MONTHLY, REPAIR, PETTY_CASH, COMMON_FEE, PARKING, INTEREST, OTHER
+  date            DateTime                @default(now())
+  title           String                  // รายการ เช่น ค่าซ่อมแซมสายไฟ ระบบแสงสว่าง
+  category        String?                 // หมวดหมู่
+  payee           String?                 // ผู้รับเงิน / ผู้จ่ายเงิน เช่น ช่างศักดิ์ดา นาทันปอง
+  payeePromptpay  String?                 // เลขพร้อมเพย์ / เลขบัญชี
+  amount          Float
+  paymentMethod   String                  @default("TRANSFER_MAIN") // TRANSFER_MAIN, PETTY_CASH, CASH
+  status          String                  @default("PAID") // PAID, PENDING, CANCELLED
+  notes           String?
+  slipUrl         String?                 // รูปสลิปโอนเงิน
+  idCardUrl       String?                 // รูปสำเนาบัตร ปชช. พร้อมเพย์+ลายเซ็น
+  receiptUrl      String?                 // รูปใบเสร็จ / ใบกำกับภาษี
+  workPhotos      String?                 // JSON string array ของรูปถ่ายหน้างาน
+  driveUrl        String?                 // ลิงก์ Google Drive อ้างอิง
+  replenishmentId String?                 // ผูกกับรอบการเบิกชดเชยเงินสดย่อย
+  replenishment   PettyCashReplenishment? @relation(fields: [replenishmentId], references: [id])
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+}
+
+model ConstructionDeposit {
+  id              String    @id @default(uuid())
+  depositNumber   String    @unique // e.g. DEP-2569-001
+  manualRefNo     String?   // เลขที่อ้างอิงเดิม
+  houseNumber     String    // บ้านเลขที่ เช่น 405/12
+  ownerName       String    // ชื่อเจ้าของบ้าน / ผู้ขอต่อเติม
+  phone           String?
+  amount          Float     // เช่น 10000
+  depositDate     DateTime  @default(now())
+  description     String?   // รายละเอียดงานต่อเติม
+  slipUrl         String?   // สลิปเงินมัดจำ
+  status          String    @default("HELD") // HELD, REFUNDED, DEDUCTED, FORFEITED
+  deductedAmount  Float     @default(0)
+  refundedAmount  Float     @default(0)
+  refundDate      DateTime?
+  refundSlipUrl   String?   // สลิปโอนคืนเงินมัดจำ
+  inspectionNotes String?   // บันทึกตรวจหน้างาน
+  driveUrl        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model PettyCashReplenishment {
+  id            String               @id @default(uuid())
+  batchNumber   String               @unique // e.g. PCR-2569-10-001
+  amount        Float                // ยอดเงินที่เบิกชดเชย
+  replenishDate DateTime             @default(now())
+  slipUrl       String?              // สลิปโอนเงินเข้ากองเงินสดย่อย
+  notes         String?
+  transactions  AccountTransaction[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model AccountingSetting {
+  id             String   @id @default(uuid())
+  pettyCashLimit Float    @default(5000) // วงเงินสดย่อยเริ่มต้น 5,000 บาท
+  nextPvNumber   Int      @default(16)   // เริ่มต้นที่ 16 ต่อจาก #15
+  nextPcNumber   Int      @default(286)  // เริ่มต้นที่ 286 ต่อจาก #285
+  nextDepNumber  Int      @default(1)
+  googleDriveUrl String?
+  updatedAt      DateTime @updatedAt
+}

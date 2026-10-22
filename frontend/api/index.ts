@@ -808,4 +808,546 @@ app.post('/api/cctv/seed', requireAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// --- Accounting (รายรับ-รายจ่าย & สดย่อย & เงินมัดจำ) ---
+// ==========================================
+
+// Helper to get or init settings
+async function getAccountingSettings() {
+  let settings = await prisma.accountingSetting.findFirst();
+  if (!settings) {
+    settings = await prisma.accountingSetting.create({
+      data: {
+        pettyCashLimit: 5000,
+        nextPvNumber: 16,
+        nextPcNumber: 286,
+        nextDepNumber: 1
+      }
+    });
+  }
+  return settings;
+}
+
+// 1. Upload Image (Slip, Receipt, ID Card, Work Photo)
+app.post('/api/accounting/upload', upload.single('file'), requireAdmin, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const ext = path.extname(req.file.originalname) || '.jpg';
+    const folder = req.body.folder || 'general';
+    const filename = `accounting/${folder}-${Date.now()}${ext}`;
+
+    const { data, error } = await supabase.storage
+      .from('slips')
+      .upload(filename, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase upload error:', error);
+      return res.status(500).json({ error: 'Failed to upload file to storage' });
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('slips').getPublicUrl(filename);
+    res.json({ url: publicUrlData.publicUrl });
+  } catch (error) {
+    console.error('Accounting upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+// 2. Get Settings
+app.get('/api/accounting/settings', requireAdmin, async (req, res) => {
+  try {
+    const settings = await getAccountingSettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// 3. Update Settings
+app.put('/api/accounting/settings', requireAdmin, async (req, res) => {
+  try {
+    const settings = await getAccountingSettings();
+    const { pettyCashLimit, nextPvNumber, nextPcNumber, nextDepNumber, googleDriveUrl } = req.body;
+    const updated = await prisma.accountingSetting.update({
+      where: { id: settings.id },
+      data: {
+        ...(pettyCashLimit !== undefined ? { pettyCashLimit: parseFloat(pettyCashLimit) } : {}),
+        ...(nextPvNumber !== undefined ? { nextPvNumber: parseInt(nextPvNumber) } : {}),
+        ...(nextPcNumber !== undefined ? { nextPcNumber: parseInt(nextPcNumber) } : {}),
+        ...(nextDepNumber !== undefined ? { nextDepNumber: parseInt(nextDepNumber) } : {}),
+        ...(googleDriveUrl !== undefined ? { googleDriveUrl } : {})
+      }
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+// 4. Get Transactions (with filtering)
+app.get('/api/accounting/transactions', requireAdmin, async (req, res) => {
+  try {
+    const { month, year, type, subType, search } = req.query;
+    const where: any = {};
+
+    if (type) where.type = String(type);
+    if (subType) where.subType = String(subType);
+
+    if (month && year) {
+      const m = parseInt(String(month));
+      const y = parseInt(String(year));
+      const start = new Date(y, m - 1, 1);
+      const end = new Date(y, m, 0, 23, 59, 59, 999);
+      where.date = { gte: start, lte: end };
+    } else if (year) {
+      const y = parseInt(String(year));
+      const start = new Date(y, 0, 1);
+      const end = new Date(y, 11, 31, 23, 59, 59, 999);
+      where.date = { gte: start, lte: end };
+    }
+
+    if (search) {
+      const q = String(search);
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { docNumber: { contains: q, mode: 'insensitive' } },
+        { manualRefNo: { contains: q, mode: 'insensitive' } },
+        { payee: { contains: q, mode: 'insensitive' } },
+        { category: { contains: q, mode: 'insensitive' } }
+      ];
+    }
+
+    const transactions = await prisma.accountTransaction.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      include: { replenishment: true }
+    });
+
+    res.json(transactions);
+  } catch (error) {
+    console.error('Fetch transactions error:', error);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
+// 5. Create Transaction
+app.post('/api/accounting/transactions', requireAdmin, async (req, res) => {
+  try {
+    const {
+      manualRefNo,
+      type,
+      subType,
+      date,
+      title,
+      category,
+      payee,
+      payeePromptpay,
+      amount,
+      paymentMethod,
+      notes,
+      slipUrl,
+      idCardUrl,
+      receiptUrl,
+      workPhotos,
+      driveUrl
+    } = req.body;
+
+    const settings = await getAccountingSettings();
+    const txDate = date ? new Date(date) : new Date();
+    const thaiYear = txDate.getFullYear() + 543;
+
+    // Generate docNumber
+    let docNumber = req.body.docNumber;
+    if (!docNumber) {
+      if (paymentMethod === 'PETTY_CASH' || subType === 'PETTY_CASH') {
+        const num = settings.nextPcNumber;
+        docNumber = `PC-${thaiYear}-${String(num).padStart(4, '0')}`;
+        await prisma.accountingSetting.update({
+          where: { id: settings.id },
+          data: { nextPcNumber: num + 1 }
+        });
+      } else if (type === 'EXPENSE') {
+        const num = settings.nextPvNumber;
+        docNumber = `PV-${thaiYear}-${String(num).padStart(4, '0')}`;
+        await prisma.accountingSetting.update({
+          where: { id: settings.id },
+          data: { nextPvNumber: num + 1 }
+        });
+      } else {
+        docNumber = `RV-${thaiYear}-${Date.now().toString().slice(-4)}`;
+      }
+    }
+
+    const tx = await prisma.accountTransaction.create({
+      data: {
+        docNumber,
+        manualRefNo: manualRefNo || null,
+        type: type || 'EXPENSE',
+        subType: subType || 'MONTHLY',
+        date: txDate,
+        title,
+        category: category || null,
+        payee: payee || null,
+        payeePromptpay: payeePromptpay || null,
+        amount: parseFloat(amount),
+        paymentMethod: paymentMethod || 'TRANSFER_MAIN',
+        notes: notes || null,
+        slipUrl: slipUrl || null,
+        idCardUrl: idCardUrl || null,
+        receiptUrl: receiptUrl || null,
+        workPhotos: workPhotos ? (typeof workPhotos === 'string' ? workPhotos : JSON.stringify(workPhotos)) : null,
+        driveUrl: driveUrl || settings.googleDriveUrl || null
+      }
+    });
+
+    await addLog(
+      type === 'EXPENSE' ? 'บันทึกรายจ่าย' : 'บันทึกรายรับ',
+      `บันทึก ${docNumber} (${manualRefNo || ''}) ${title} ยอด ${parseFloat(amount).toLocaleString()} บาท`,
+      payee || '-'
+    );
+
+    res.json(tx);
+  } catch (error) {
+    console.error('Create transaction error:', error);
+    res.status(500).json({ error: 'Failed to create transaction' });
+  }
+});
+
+// 6. Update Transaction
+app.put('/api/accounting/transactions/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      manualRefNo,
+      type,
+      subType,
+      date,
+      title,
+      category,
+      payee,
+      payeePromptpay,
+      amount,
+      paymentMethod,
+      notes,
+      slipUrl,
+      idCardUrl,
+      receiptUrl,
+      workPhotos,
+      driveUrl
+    } = req.body;
+
+    const updated = await prisma.accountTransaction.update({
+      where: { id },
+      data: {
+        ...(manualRefNo !== undefined ? { manualRefNo } : {}),
+        ...(type !== undefined ? { type } : {}),
+        ...(subType !== undefined ? { subType } : {}),
+        ...(date ? { date: new Date(date) } : {}),
+        ...(title !== undefined ? { title } : {}),
+        ...(category !== undefined ? { category } : {}),
+        ...(payee !== undefined ? { payee } : {}),
+        ...(payeePromptpay !== undefined ? { payeePromptpay } : {}),
+        ...(amount !== undefined ? { amount: parseFloat(amount) } : {}),
+        ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+        ...(notes !== undefined ? { notes } : {}),
+        ...(slipUrl !== undefined ? { slipUrl } : {}),
+        ...(idCardUrl !== undefined ? { idCardUrl } : {}),
+        ...(receiptUrl !== undefined ? { receiptUrl } : {}),
+        ...(workPhotos !== undefined ? { workPhotos: typeof workPhotos === 'string' ? workPhotos : JSON.stringify(workPhotos) } : {}),
+        ...(driveUrl !== undefined ? { driveUrl } : {})
+      }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Update transaction error:', error);
+    res.status(500).json({ error: 'Failed to update transaction' });
+  }
+});
+
+// 7. Delete Transaction
+app.delete('/api/accounting/transactions/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tx = await prisma.accountTransaction.delete({ where: { id } });
+    await addLog('ลบรายการบัญชี', `ลบรายการ ${tx.docNumber} ยอด ${tx.amount} บาท`, tx.payee || '-');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete transaction error:', error);
+    res.status(500).json({ error: 'Failed to delete transaction' });
+  }
+});
+
+// 8. Accounting Summary (Financial KPI)
+app.get('/api/accounting/summary', requireAdmin, async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    const settings = await getAccountingSettings();
+
+    const now = new Date();
+    const m = month ? parseInt(String(month)) : now.getMonth() + 1;
+    const y = year ? parseInt(String(year)) : now.getFullYear();
+
+    const startOfMonth = new Date(y, m - 1, 1);
+    const endOfMonth = new Date(y, m, 0, 23, 59, 59, 999);
+
+    // 1) Expenses this month
+    const expenses = await prisma.accountTransaction.findMany({
+      where: {
+        type: 'EXPENSE',
+        date: { gte: startOfMonth, lte: endOfMonth }
+      }
+    });
+
+    let totalMonthlyExpense = 0;
+    let totalRepairExpense = 0;
+    let totalPettyCashExpense = 0;
+    let totalOtherExpense = 0;
+
+    for (const exp of expenses) {
+      if (exp.subType === 'MONTHLY') totalMonthlyExpense += exp.amount;
+      else if (exp.subType === 'REPAIR') totalRepairExpense += exp.amount;
+      else if (exp.subType === 'PETTY_CASH') totalPettyCashExpense += exp.amount;
+      else totalOtherExpense += exp.amount;
+    }
+    const totalExpense = totalMonthlyExpense + totalRepairExpense + totalPettyCashExpense + totalOtherExpense;
+
+    // 2) Direct recorded income this month
+    const incomes = await prisma.accountTransaction.findMany({
+      where: {
+        type: 'INCOME',
+        date: { gte: startOfMonth, lte: endOfMonth }
+      }
+    });
+    let directIncome = incomes.reduce((acc, curr) => acc + curr.amount, 0);
+
+    // 3) Common fee collected from verified Payments in this month (automatic integration)
+    const verifiedPayments = await prisma.payment.findMany({
+      where: {
+        paymentDate: { gte: startOfMonth, lte: endOfMonth },
+        receiptNumber: { not: null }
+      }
+    });
+    const commonFeeIncome = verifiedPayments.reduce((acc, p) => acc + Number(p.amount), 0);
+    const totalIncome = directIncome + commonFeeIncome;
+
+    // 4) Petty Cash Balance calculation
+    const unreplenishedPetty = await prisma.accountTransaction.findMany({
+      where: {
+        paymentMethod: 'PETTY_CASH',
+        replenishmentId: null
+      }
+    });
+    const unreplenishedTotal = unreplenishedPetty.reduce((acc, curr) => acc + curr.amount, 0);
+    const pettyCashBalance = Math.max(0, settings.pettyCashLimit - unreplenishedTotal);
+
+    // 5) Construction deposits currently HELD
+    const heldDeposits = await prisma.constructionDeposit.findMany({
+      where: { status: 'HELD' }
+    });
+    const totalHeldDeposits = heldDeposits.reduce((acc, d) => acc + d.amount, 0);
+
+    res.json({
+      month: m,
+      year: y,
+      totalIncome,
+      commonFeeIncome,
+      directIncome,
+      totalExpense,
+      totalMonthlyExpense,
+      totalRepairExpense,
+      totalPettyCashExpense,
+      totalOtherExpense,
+      netSurplus: totalIncome - totalExpense,
+      pettyCashLimit: settings.pettyCashLimit,
+      pettyCashSpent: unreplenishedTotal,
+      pettyCashBalance,
+      unreplenishedCount: unreplenishedPetty.length,
+      totalHeldDeposits,
+      heldDepositsCount: heldDeposits.length,
+      googleDriveUrl: settings.googleDriveUrl
+    });
+  } catch (error) {
+    console.error('Accounting summary error:', error);
+    res.status(500).json({ error: 'Failed to calculate summary' });
+  }
+});
+
+// 9. Petty Cash Replenish (เบิกชดเชยเงินสดย่อย)
+app.post('/api/accounting/petty-cash/replenish', requireAdmin, async (req, res) => {
+  try {
+    const { slipUrl, notes } = req.body;
+    const unreplenished = await prisma.accountTransaction.findMany({
+      where: {
+        paymentMethod: 'PETTY_CASH',
+        replenishmentId: null
+      }
+    });
+
+    if (unreplenished.length === 0) {
+      return res.status(400).json({ error: 'ไม่มีรายการเงินสดย่อยที่รอเบิกชดเชย' });
+    }
+
+    const totalAmount = unreplenished.reduce((acc, curr) => acc + curr.amount, 0);
+    const thaiYear = new Date().getFullYear() + 543;
+    const batchNumber = `PCR-${thaiYear}-${Date.now().toString().slice(-4)}`;
+
+    const batch = await prisma.pettyCashReplenishment.create({
+      data: {
+        batchNumber,
+        amount: totalAmount,
+        slipUrl: slipUrl || null,
+        notes: notes || `เบิกชดเชยเงินสดย่อย ${unreplenished.length} รายการ`,
+        transactions: {
+          connect: unreplenished.map(tx => ({ id: tx.id }))
+        }
+      }
+    });
+
+    await addLog('เบิกชดเชยเงินสดย่อย', `เบิกชดเชย ${batchNumber} จำนวน ${totalAmount.toLocaleString()} บาท (${unreplenished.length} รายการ)`, 'เงินสดย่อย');
+
+    res.json({ success: true, batch });
+  } catch (error) {
+    console.error('Petty cash replenish error:', error);
+    res.status(500).json({ error: 'Failed to replenish petty cash' });
+  }
+});
+
+// 10. Construction Deposits (CRUD)
+app.get('/api/accounting/deposits', requireAdmin, async (req, res) => {
+  try {
+    const { status, search } = req.query;
+    const where: any = {};
+    if (status) where.status = String(status);
+    if (search) {
+      const q = String(search);
+      where.OR = [
+        { houseNumber: { contains: q, mode: 'insensitive' } },
+        { ownerName: { contains: q, mode: 'insensitive' } },
+        { depositNumber: { contains: q, mode: 'insensitive' } },
+        { manualRefNo: { contains: q, mode: 'insensitive' } }
+      ];
+    }
+    const deposits = await prisma.constructionDeposit.findMany({
+      where,
+      orderBy: { depositDate: 'desc' }
+    });
+    res.json(deposits);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch deposits' });
+  }
+});
+
+app.post('/api/accounting/deposits', requireAdmin, async (req, res) => {
+  try {
+    const { manualRefNo, houseNumber, ownerName, phone, amount, depositDate, description, slipUrl, driveUrl } = req.body;
+    const settings = await getAccountingSettings();
+    const thaiYear = new Date().getFullYear() + 543;
+    const num = settings.nextDepNumber;
+    const depositNumber = `DEP-${thaiYear}-${String(num).padStart(3, '0')}`;
+
+    await prisma.accountingSetting.update({
+      where: { id: settings.id },
+      data: { nextDepNumber: num + 1 }
+    });
+
+    const deposit = await prisma.constructionDeposit.create({
+      data: {
+        depositNumber,
+        manualRefNo: manualRefNo || null,
+        houseNumber,
+        ownerName,
+        phone: phone || null,
+        amount: parseFloat(amount),
+        depositDate: depositDate ? new Date(depositDate) : new Date(),
+        description: description || null,
+        slipUrl: slipUrl || null,
+        driveUrl: driveUrl || settings.googleDriveUrl || null,
+        status: 'HELD'
+      }
+    });
+
+    await addLog('รับเงินมัดจำต่อเติม', `รับมัดจำ ${depositNumber} บ้าน ${houseNumber} ยอด ${parseFloat(amount).toLocaleString()} บาท`, ownerName);
+
+    res.json(deposit);
+  } catch (error) {
+    console.error('Create deposit error:', error);
+    res.status(500).json({ error: 'Failed to create deposit' });
+  }
+});
+
+app.put('/api/accounting/deposits/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      status,
+      deductedAmount,
+      refundedAmount,
+      refundDate,
+      refundSlipUrl,
+      inspectionNotes,
+      description,
+      phone,
+      ownerName
+    } = req.body;
+
+    const deposit = await prisma.constructionDeposit.update({
+      where: { id },
+      data: {
+        ...(status !== undefined ? { status } : {}),
+        ...(deductedAmount !== undefined ? { deductedAmount: parseFloat(deductedAmount) } : {}),
+        ...(refundedAmount !== undefined ? { refundedAmount: parseFloat(refundedAmount) } : {}),
+        ...(refundDate ? { refundDate: new Date(refundDate) } : {}),
+        ...(refundSlipUrl !== undefined ? { refundSlipUrl } : {}),
+        ...(inspectionNotes !== undefined ? { inspectionNotes } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(ownerName !== undefined ? { ownerName } : {})
+      }
+    });
+
+    // If deductedAmount > 0 and status is DEDUCTED or FORFEITED, automatically create an income transaction for damages!
+    if (deductedAmount > 0 && (status === 'DEDUCTED' || status === 'FORFEITED')) {
+      const thaiYear = new Date().getFullYear() + 543;
+      await prisma.accountTransaction.create({
+        data: {
+          docNumber: `RV-${thaiYear}-DEP-${deposit.houseNumber.replace('/', '-')}`,
+          type: 'INCOME',
+          subType: 'OTHER',
+          title: `รายรับค่าชดใช้ความเสียหายต่อเติมบ้าน ${deposit.houseNumber}`,
+          category: 'ชดใช้ค่าเสียหาย',
+          amount: parseFloat(deductedAmount),
+          payee: deposit.ownerName,
+          date: new Date(),
+          notes: `หักจากเงินมัดจำ ${deposit.depositNumber}: ${inspectionNotes || ''}`
+        }
+      });
+    }
+
+    await addLog(
+      status === 'REFUNDED' ? 'คืนเงินมัดจำ' : 'อัปเดตเงินมัดจำ',
+      `อัปเดตสถานะเงินมัดจำ ${deposit.depositNumber} บ้าน ${deposit.houseNumber} เป็น ${status}`,
+      deposit.ownerName
+    );
+
+    res.json(deposit);
+  } catch (error) {
+    console.error('Update deposit error:', error);
+    res.status(500).json({ error: 'Failed to update deposit' });
+  }
+});
+
+app.delete('/api/accounting/deposits/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.constructionDeposit.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete deposit' });
+  }
+});
+
 export default app;
