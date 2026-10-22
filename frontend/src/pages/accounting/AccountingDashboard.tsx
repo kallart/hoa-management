@@ -42,8 +42,18 @@ export default function AccountingDashboard() {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
-  const [isReplenishModalOpen, setIsReplenishModalOpen] = useState(false);
+  const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [pettyCashData, setPettyCashData] = useState<any>(null);
+
+  // Topup Form State
+  const [topupForm, setTopupForm] = useState({
+    amount: '5000',
+    date: new Date().toISOString().split('T')[0],
+    slipUrl: '',
+    transferFrom: 'บัญชีนิติบุคคล (KBIZ) / กรรมการ',
+    notes: 'กรรมการโอนเงินเติมวงเงินสดย่อย 5,000 บาท'
+  });
 
   // Transaction Form State
   const [editingTxId, setEditingTxId] = useState<string | null>(null);
@@ -104,17 +114,19 @@ export default function AccountingDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [sumRes, txRes, depRes, setRes] = await Promise.all([
+      const [sumRes, txRes, depRes, setRes, pcRes] = await Promise.all([
         api.get(`/api/accounting/summary?month=${selectedMonth}&year=${selectedYear}`),
         api.get(`/api/accounting/transactions?month=${selectedMonth}&year=${selectedYear}`),
         api.get('/api/accounting/deposits'),
-        api.get('/api/accounting/settings')
+        api.get('/api/accounting/settings'),
+        api.get(`/api/accounting/petty-cash?month=${selectedMonth}&year=${selectedYear}`)
       ]);
 
       setSummary(sumRes.data);
       setTransactions(txRes.data);
       setDeposits(depRes.data);
       setSettings(setRes.data);
+      setPettyCashData(pcRes.data);
     } catch (error) {
       console.error(error);
       toast.error('ไม่สามารถโหลดข้อมูลบัญชีได้');
@@ -148,6 +160,8 @@ export default function AccountingDashboard() {
         setRefundForm(prev => ({ ...prev, refundSlipUrl: url }));
       } else if (fieldName === 'depositSlip') {
         setDepositForm(prev => ({ ...prev, slipUrl: url }));
+      } else if (fieldName === 'topupSlip') {
+        setTopupForm(prev => ({ ...prev, slipUrl: url }));
       } else if (fieldName === 'replenishSlip') {
         setReplenishForm(prev => ({ ...prev, slipUrl: url }));
       } else {
@@ -301,6 +315,38 @@ export default function AccountingDashboard() {
       fetchData();
     } catch (error) {
       toast.error('ไม่สามารถทำรายการคืนเงินได้');
+    }
+  };
+
+  // Submit Topup from Committee
+  const handleSaveTopup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/api/accounting/petty-cash/topup', topupForm);
+      toast.success('บันทึกการเติมเงินสดย่อยเรียบร้อยแล้ว');
+      setIsTopupModalOpen(false);
+      setTopupForm({
+        amount: '5000',
+        date: new Date().toISOString().split('T')[0],
+        slipUrl: '',
+        transferFrom: 'บัญชีนิติบุคคล (KBIZ) / กรรมการ',
+        notes: 'กรรมการโอนเงินเติมวงเงินสดย่อย 5,000 บาท'
+      });
+      fetchData();
+    } catch (error) {
+      toast.error('ไม่สามารถบันทึกการเติมเงินได้');
+    }
+  };
+
+  // Delete Topup
+  const handleDeleteTopup = async (id: string, topupNumber: string) => {
+    if (!window.confirm(`ยืนยันการลบรายการเติมเงิน ${topupNumber} ใช่หรือไม่?`)) return;
+    try {
+      await api.delete(`/api/accounting/petty-cash/topup/${id}`);
+      toast.success('ลบรายการเติมเงินเรียบร้อยแล้ว');
+      fetchData();
+    } catch (error) {
+      toast.error('ไม่สามารถลบรายการได้');
     }
   };
 
@@ -878,102 +924,228 @@ export default function AccountingDashboard() {
         </div>
       )}
 
-      {/* --- TAB 3: PETTY CASH (วงเงินสดย่อย 5,000 บ.) --- */}
+      {/* --- TAB 3: PETTY CASH (วงเงินสดย่อย) --- */}
       {activeTab === 'petty-cash' && (
         <div>
-          {/* Petty Cash Header Card */}
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '24px', border: '1px solid #E5E7EB', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', color: '#1F2937' }}>
-                  💼 การจัดการวงเงินสดย่อย (Petty Cash Fund)
-                </h3>
-                <p style={{ margin: 0, color: '#6B7280', fontSize: '0.9rem' }}>
-                  กำหนดวงเงินคงที่ <strong>{(summary?.pettyCashLimit || 5000).toLocaleString()} บาท</strong> สำหรับค่าเครื่องดื่ม ของว่างประชุมกรรมการ และค่าใช้จ่ายเร่งด่วน
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  onClick={() => openNewTxModal('EXPENSE', 'PETTY_CASH')}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Plus size={16} /> บันทึกจ่ายสดย่อย (#285)
-                </button>
-                <button 
-                  onClick={() => setIsReplenishModalOpen(true)}
-                  className="btn btn-primary"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#7C3AED', borderColor: '#7C3AED' }}
-                >
-                  <RefreshCw size={16} /> ทำเรื่องเบิกชดเชยเงินสดย่อย
-                </button>
-              </div>
+          {/* Petty Cash Monthly Rollover Summary Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+            {/* 1. Opening Balance */}
+            <div style={{ backgroundColor: '#FFFFFF', padding: '16px 20px', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
+              <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>1. ยอดยกมาจากเดือนก่อน</span>
+              <h3 style={{ margin: '6px 0 0 0', fontSize: '1.4rem', color: '#334155', fontWeight: 'bold' }}>
+                {(pettyCashData?.openingBalance ?? 5000).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>วงเงินตั้งต้นระบบ 5,000 บ.</span>
             </div>
 
-            {/* Progress Bar of Petty Cash */}
-            <div style={{ marginTop: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
-                <span>ใช้ไปแล้วรอบนี้: <strong style={{ color: '#DC2626' }}>{(summary?.pettyCashSpent || 0).toLocaleString()} ฿</strong> ({summary?.unreplenishedCount || 0} รายการ)</span>
-                <span>คงเหลือในมือ: <strong style={{ color: '#059669' }}>{(summary?.pettyCashBalance || 0).toLocaleString()} ฿</strong></span>
-              </div>
-              <div style={{ width: '100%', height: '12px', backgroundColor: '#E5E7EB', borderRadius: '6px', overflow: 'hidden' }}>
-                <div 
-                  style={{ 
-                    width: `${Math.min(100, ((summary?.pettyCashSpent || 0) / (summary?.pettyCashLimit || 5000)) * 100)}%`, 
-                    height: '100%', 
-                    backgroundColor: '#DC2626',
-                    transition: 'width 0.3s'
-                  }}
-                ></div>
-              </div>
+            {/* 2. Top-ups */}
+            <div style={{ backgroundColor: '#FFFFFF', padding: '16px 20px', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
+              <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>2. กรรมการโอนเติมเดือนนี้</span>
+              <h3 style={{ margin: '6px 0 0 0', fontSize: '1.4rem', color: '#059669', fontWeight: 'bold' }}>
+                +{(pettyCashData?.totalMonthTopups || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: '#059669' }}>
+                โอนเข้ามา {pettyCashData?.topupCount || 0} ครั้ง (ครั้งละ 5,000 บ.)
+              </span>
+            </div>
+
+            {/* 3. Expenses */}
+            <div style={{ backgroundColor: '#FFFFFF', padding: '16px 20px', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
+              <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>3. จ่ายย่อยจริงเดือนนี้</span>
+              <h3 style={{ margin: '6px 0 0 0', fontSize: '1.4rem', color: '#DC2626', fontWeight: 'bold' }}>
+                -{(pettyCashData?.totalMonthExpenses || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: '#DC2626' }}>
+                จ่ายไป {pettyCashData?.expenseCount || 0} รายการ (ไม่เกิน 2,000 บ.)
+              </span>
+            </div>
+
+            {/* 4. Closing Balance */}
+            <div style={{ backgroundColor: '#FFFFFF', padding: '16px 20px', borderRadius: '12px', border: '2px solid #8B5CF6' }}>
+              <span style={{ fontSize: '0.82rem', color: '#7C3AED', fontWeight: 'bold' }}>4. เงินคงเหลือยกไปเดือนหน้า</span>
+              <h3 style={{ margin: '6px 0 0 0', fontSize: '1.4rem', color: '#7C3AED', fontWeight: 'bold' }}>
+                ={(pettyCashData?.closingBalance ?? 5000).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: '#6D28D9' }}>ยกยอดเป็นเงินตั้งต้นเดือนถัดไป</span>
             </div>
           </div>
 
-          {/* Unreplenished Transactions List */}
-          <h4 style={{ margin: '0 0 12px 0', fontSize: '1.05rem', color: '#1F2937' }}>
-            รายการที่ใช้ไปในรอบนี้ (รอเบิกชดเชย)
-          </h4>
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#FAFBFD', borderBottom: '1px solid #F1F5F9' }}>
-                  <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>วันที่</th>
-                  <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>เลขที่ (#)</th>
-                  <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>รายการ</th>
-                  <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>ผู้รับเงิน / ร้านค้า</th>
-                  <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'right' }}>จำนวนเงิน</th>
-                  <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'center' }}>หลักฐาน</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.filter(t => t.paymentMethod === 'PETTY_CASH').map((tx) => (
-                  <tr key={tx.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
-                    <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{new Date(tx.date).toLocaleDateString('th-TH')}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 'bold', color: '#7C3AED' }}>{tx.manualRefNo || tx.docNumber}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{tx.title}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{tx.payee || '-'}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.85rem', textAlign: 'right', fontWeight: 'bold', color: '#DC2626' }}>
-                      -{tx.amount.toLocaleString()} ฿
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      {tx.receiptUrl ? (
-                        <button onClick={() => setPreviewImage(tx.receiptUrl)} style={{ border: 'none', background: '#FEF3C7', color: '#D97706', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>ดูใบเสร็จ</button>
-                      ) : tx.slipUrl ? (
-                        <button onClick={() => setPreviewImage(tx.slipUrl)} style={{ border: 'none', background: '#ECFDF5', color: '#059669', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>ดูสลิป</button>
-                      ) : '-'}
-                    </td>
+          {/* Action Header Card */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 24px', border: '1px solid #E5E7EB', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+            <div>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.15rem', color: '#1F2937' }}>
+                💼 บันทึกและตรวจสอบวงเงินสดย่อย ({monthNames[selectedMonth - 1]} {selectedYear + 543})
+              </h3>
+              <p style={{ margin: 0, color: '#6B7280', fontSize: '0.85rem' }}>
+                รายการซื้อของย่อยไม่เกิน 2,000 บ. พร้อมสลิปโอน + หลักฐานสั่งซื้อ + รูปสินค้า เมื่อใกล้หมดแจ้งกรรมการโอนเติมครั้งละ 5,000 บ.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={() => setIsTopupModalOpen(true)}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#059669', borderColor: '#059669' }}
+              >
+                <Plus size={16} /> บันทึกกรรมการโอนเติม (+5,000 บ.)
+              </button>
+              <button 
+                onClick={() => openNewTxModal('EXPENSE', 'PETTY_CASH')}
+                className="btn btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#7C3AED', borderColor: '#DDD6FE' }}
+              >
+                <Plus size={16} /> บันทึกจ่ายสดย่อย (#285)
+              </button>
+            </div>
+          </div>
+
+          {/* Section 1: Top-ups from committee */}
+          <div style={{ marginBottom: '28px' }}>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#1F2937', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              📥 รายการเงินที่กรรมการโอนเติมเข้ามาในเดือนนี้ ({pettyCashData?.topupCount || 0} ครั้ง)
+            </h4>
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#FAFBFD', borderBottom: '1px solid #F1F5F9' }}>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>วันที่โอน</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>เลขที่รายการ</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>โอนมาจาก</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>หมายเหตุ</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'right' }}>จำนวนเงินที่โอน</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'center' }}>สลิปโอนเงิน</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'center' }}>ลบ</th>
                   </tr>
-                ))}
-                {transactions.filter(t => t.paymentMethod === 'PETTY_CASH').length === 0 && (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#9CA3AF' }}>
-                      ยังไม่มีรายการใช้เงินสดย่อยในรอบนี้
-                    </td>
+                </thead>
+                <tbody>
+                  {pettyCashData?.topups?.map((topup: any) => (
+                    <tr key={topup.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#334155' }}>
+                        {new Date(topup.date).toLocaleDateString('th-TH')}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 600, color: '#059669' }}>
+                        {topup.topupNumber}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#334155' }}>
+                        {topup.transferFrom || 'บัญชีนิติบุคคล / กรรมการ'}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#64748B' }}>
+                        {topup.notes || '-'}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '0.95rem', fontWeight: 'bold', color: '#059669', textAlign: 'right' }}>
+                        +{topup.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        {topup.slipUrl ? (
+                          <button 
+                            onClick={() => setPreviewImage(topup.slipUrl)} 
+                            style={{ border: 'none', background: '#ECFDF5', color: '#059669', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                          >
+                            ดูสลิป
+                          </button>
+                        ) : '-'}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <button 
+                          onClick={() => handleDeleteTopup(topup.id, topup.topupNumber)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}
+                          title="ลบ"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {(!pettyCashData?.topups || pettyCashData.topups.length === 0) && (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#9CA3AF' }}>
+                        ยังไม่มีรายการที่กรรมการโอนเติมเข้ามาในเดือนนี้
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 2: Petty cash expenditures */}
+          <div>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#1F2937', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              📤 รายการจ่ายเงินสดย่อยในเดือนนี้ (ไม่เกิน 2,000 บ./รายการ) ({pettyCashData?.expenseCount || 0} รายการ)
+            </h4>
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#FAFBFD', borderBottom: '1px solid #F1F5F9' }}>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>วันที่</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>เลขที่ (#)</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>รายการ</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem' }}>ผู้รับเงิน / ร้านค้า</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'right' }}>จำนวนเงิน</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'center' }}>หลักฐาน (สลิป/สั่งซื้อ/สินค้า)</th>
+                    <th style={{ padding: '12px 16px', color: '#94A3B8', fontSize: '0.82rem', textAlign: 'center' }}>จัดการ</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pettyCashData?.expenses?.map((tx: any) => {
+                    let photos: string[] = [];
+                    if (tx.workPhotos) {
+                      try { photos = JSON.parse(tx.workPhotos); } catch (e) { photos = [tx.workPhotos]; }
+                    }
+
+                    return (
+                      <tr key={tx.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                        <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{new Date(tx.date).toLocaleDateString('th-TH')}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 'bold', color: '#7C3AED' }}>
+                          {tx.manualRefNo || tx.docNumber}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>
+                          <span style={{ fontWeight: 600, color: '#1F2937' }}>{tx.title}</span>
+                          {tx.notes && <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{tx.notes}</div>}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{tx.payee || '-'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.85rem', textAlign: 'right', fontWeight: 'bold', color: '#DC2626' }}>
+                          -{tx.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', gap: '4px' }}>
+                            {tx.slipUrl && (
+                              <button onClick={() => setPreviewImage(tx.slipUrl)} style={{ border: 'none', background: '#ECFDF5', color: '#059669', padding: '3px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>สลิป</button>
+                            )}
+                            {tx.receiptUrl && (
+                              <button onClick={() => setPreviewImage(tx.receiptUrl)} style={{ border: 'none', background: '#FEF3C7', color: '#D97706', padding: '3px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>สั่งซื้อ/ใบเสร็จ</button>
+                            )}
+                            {photos.length > 0 && (
+                              <button onClick={() => setPreviewImage(photos[0])} style={{ border: 'none', background: '#F3E8FF', color: '#7C3AED', padding: '3px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>รูปสินค้า ({photos.length})</button>
+                            )}
+                            {!tx.slipUrl && !tx.receiptUrl && photos.length === 0 && (
+                              <span style={{ color: '#9CA3AF', fontSize: '0.75rem' }}>ไม่มี</span>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', gap: '8px' }}>
+                            <button onClick={() => openEditTxModal(tx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}>
+                              <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => handleDeleteTx(tx.id, tx.title)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {(!pettyCashData?.expenses || pettyCashData.expenses.length === 0) && (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#9CA3AF' }}>
+                        ยังไม่มีรายการจ่ายเงินสดย่อยในเดือนนี้
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1571,38 +1743,65 @@ export default function AccountingDashboard() {
         </div>
       )}
 
-      {/* --- MODAL 4: REPLENISH PETTY CASH --- */}
-      {isReplenishModalOpen && (
-        <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }} onClick={() => setIsReplenishModalOpen(false)}>
+      {/* --- MODAL 4: TOPUP PETTY CASH (กรรมการโอนเติมเงินสดย่อย 5,000 บ.) --- */}
+      {isTopupModalOpen && (
+        <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }} onClick={() => setIsTopupModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', width: '95%' }}>
             <div className="modal-header">
-              <h2 className="h2" style={{ margin: 0, fontSize: '1.25rem' }}>ทำเรื่องเบิกชดเชยเงินสดย่อย</h2>
-              <button className="btn-icon" onClick={() => setIsReplenishModalOpen(false)}>✕</button>
+              <h2 className="h2" style={{ margin: 0, fontSize: '1.25rem' }}>
+                บันทึกรับเงินเติมสดย่อย (จากกรรมการ)
+              </h2>
+              <button className="btn-icon" onClick={() => setIsTopupModalOpen(false)}>✕</button>
             </div>
 
-            <form onSubmit={handleProcessReplenish} className="modal-body">
-              <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.85rem', color: '#64748B' }}>รายการที่รอเบิกชดเชย:</span>
-                  <strong style={{ color: '#1E293B' }}>{summary?.unreplenishedCount || 0} รายการ</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.85rem', color: '#64748B' }}>ยอดเงินที่ต้องโอนเติม:</span>
-                  <strong style={{ color: '#DC2626', fontSize: '1.2rem' }}>
-                    {(summary?.pettyCashSpent || 0).toLocaleString()} บาท
-                  </strong>
-                </div>
-                <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: '#6B7280' }}>
-                  เมื่อกดยืนยัน รายการสดย่อยรอบนี้จะถูกปิดรอบ และยอดเงินสดย่อยจะกลับมาเต็ม <strong>5,000 บาท</strong>
+            <form onSubmit={handleSaveTopup} className="modal-body">
+              <div style={{ backgroundColor: '#ECFDF5', padding: '14px', borderRadius: '10px', border: '1px solid #A7F3D0', marginBottom: '16px' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#065F46', lineHeight: 1.5 }}>
+                  💡 เมื่อเงินสดย่อยใกล้หมด กรรมการจะโอนเติมเข้ามาครั้งละ <strong>5,000 บาท</strong> กรุณากรอกวันที่และแนบสลิปโอนเงินเพื่อใช้เป็นหลักฐานสรุปสิ้นเดือน
                 </p>
               </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>จำนวนเงินที่โอนเติม (บาท)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    className="form-control" 
+                    value={topupForm.amount}
+                    onChange={(e) => setTopupForm({ ...topupForm, amount: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>วันที่โอนเงิน</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    value={topupForm.date}
+                    onChange={(e) => setTopupForm({ ...topupForm, date: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label>สลิปการโอนเงินเติมเข้ากองเงินสดย่อย</label>
+                <label>โอนมาจาก (บัญชี / กรรมการ)</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="เช่น บัญชีนิติบุคคล กสิกรไทย หรือ นาย..."
+                  value={topupForm.transferFrom}
+                  onChange={(e) => setTopupForm({ ...topupForm, transferFrom: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label>สลิปการโอนเงินของกรรมการ</label>
                 <input 
                   type="file" 
                   accept="image/*" 
-                  onChange={(e) => handleFileUpload(e, 'replenishSlip')}
+                  onChange={(e) => handleFileUpload(e, 'topupSlip')}
                 />
               </div>
 
@@ -1611,18 +1810,18 @@ export default function AccountingDashboard() {
                 <textarea 
                   className="form-control" 
                   rows={2} 
-                  placeholder="เช่น โอนเงินชดเชยเข้าบัญชีผู้ถือกองเงินสด"
-                  value={replenishForm.notes}
-                  onChange={(e) => setReplenishForm({ ...replenishForm, notes: e.target.value })}
+                  placeholder="เช่น เติมครั้งที่ 1 เดือน ต.ค. 69"
+                  value={topupForm.notes}
+                  onChange={(e) => setTopupForm({ ...topupForm, notes: e.target.value })}
                 />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsReplenishModalOpen(false)}>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsTopupModalOpen(false)}>
                   ยกเลิก
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#7C3AED', borderColor: '#7C3AED' }}>
-                  ยืนยันการเบิกชดเชย
+                <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#059669', borderColor: '#059669' }}>
+                  บันทึกการเติมเงิน
                 </button>
               </div>
             </form>

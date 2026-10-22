@@ -1135,14 +1135,28 @@ app.get('/api/accounting/summary', requireAdmin, async (req, res) => {
     const totalIncome = directIncome + commonFeeIncome;
 
     // 4) Petty Cash Balance calculation
-    const unreplenishedPetty = await prisma.accountTransaction.findMany({
-      where: {
-        paymentMethod: 'PETTY_CASH',
-        replenishmentId: null
-      }
-    });
-    const unreplenishedTotal = unreplenishedPetty.reduce((acc, curr) => acc + curr.amount, 0);
-    const pettyCashBalance = Math.max(0, settings.pettyCashLimit - unreplenishedTotal);
+    // Base fund is 5,000
+    const baseFund = 5000;
+    // Prior topups & expenses
+    const priorTopups = await prisma.pettyCashTopup.findMany({ where: { date: { lt: startOfMonth } } });
+    const priorTopupsTotal = priorTopups.reduce((acc, curr) => acc + curr.amount, 0);
+    const priorExpenses = await prisma.accountTransaction.findMany({ where: { paymentMethod: 'PETTY_CASH', date: { lt: startOfMonth } } });
+    const priorExpensesTotal = priorExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const pettyOpeningBalance = baseFund + priorTopupsTotal - priorExpensesTotal;
+
+    // Month topups
+    const monthTopups = await prisma.pettyCashTopup.findMany({ where: { date: { gte: startOfMonth, lte: endOfMonth } } });
+    const totalPettyCashTopupMonth = monthTopups.reduce((acc, curr) => acc + curr.amount, 0);
+
+    // Month closing balance (rollover to next month)
+    const pettyCashClosingBalance = pettyOpeningBalance + totalPettyCashTopupMonth - totalPettyCashExpense;
+
+    // All-time cash in hand right now
+    const allTopups = await prisma.pettyCashTopup.findMany({});
+    const allTopupsTotal = allTopups.reduce((acc, curr) => acc + curr.amount, 0);
+    const allExpenses = await prisma.accountTransaction.findMany({ where: { paymentMethod: 'PETTY_CASH' } });
+    const allExpensesTotal = allExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const pettyCashCurrentCash = baseFund + allTopupsTotal - allExpensesTotal;
 
     // 5) Construction deposits currently HELD
     const heldDeposits = await prisma.constructionDeposit.findMany({
@@ -1162,10 +1176,11 @@ app.get('/api/accounting/summary', requireAdmin, async (req, res) => {
       totalPettyCashExpense,
       totalOtherExpense,
       netSurplus: totalIncome - totalExpense,
-      pettyCashLimit: settings.pettyCashLimit,
-      pettyCashSpent: unreplenishedTotal,
-      pettyCashBalance,
-      unreplenishedCount: unreplenishedPetty.length,
+      pettyCashOpeningBalance: pettyOpeningBalance,
+      pettyCashTopupMonth: totalPettyCashTopupMonth,
+      pettyCashTopupCount: monthTopups.length,
+      pettyCashClosingBalance,
+      pettyCashBalance: pettyCashCurrentCash,
       totalHeldDeposits,
       heldDepositsCount: heldDeposits.length,
       googleDriveUrl: settings.googleDriveUrl
@@ -1176,43 +1191,97 @@ app.get('/api/accounting/summary', requireAdmin, async (req, res) => {
   }
 });
 
-// 9. Petty Cash Replenish (เบิกชดเชยเงินสดย่อย)
-app.post('/api/accounting/petty-cash/replenish', requireAdmin, async (req, res) => {
+// 9. Petty Cash Monthly Details & Top-up Endpoints
+app.get('/api/accounting/petty-cash', requireAdmin, async (req, res) => {
   try {
-    const { slipUrl, notes } = req.body;
-    const unreplenished = await prisma.accountTransaction.findMany({
-      where: {
-        paymentMethod: 'PETTY_CASH',
-        replenishmentId: null
-      }
+    const { month, year } = req.query;
+    const now = new Date();
+    const m = month ? parseInt(String(month)) : now.getMonth() + 1;
+    const y = year ? parseInt(String(year)) : now.getFullYear();
+
+    const startOfMonth = new Date(y, m - 1, 1);
+    const endOfMonth = new Date(y, m, 0, 23, 59, 59, 999);
+    const baseFund = 5000;
+
+    const priorTopups = await prisma.pettyCashTopup.findMany({ where: { date: { lt: startOfMonth } } });
+    const priorTopupsTotal = priorTopups.reduce((acc, curr) => acc + curr.amount, 0);
+    const priorExpenses = await prisma.accountTransaction.findMany({ where: { paymentMethod: 'PETTY_CASH', date: { lt: startOfMonth } } });
+    const priorExpensesTotal = priorExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const openingBalance = baseFund + priorTopupsTotal - priorExpensesTotal;
+
+    const topups = await prisma.pettyCashTopup.findMany({
+      where: { date: { gte: startOfMonth, lte: endOfMonth } },
+      orderBy: { date: 'asc' }
     });
+    const totalMonthTopups = topups.reduce((acc, curr) => acc + curr.amount, 0);
 
-    if (unreplenished.length === 0) {
-      return res.status(400).json({ error: 'ไม่มีรายการเงินสดย่อยที่รอเบิกชดเชย' });
-    }
-
-    const totalAmount = unreplenished.reduce((acc, curr) => acc + curr.amount, 0);
-    const thaiYear = new Date().getFullYear() + 543;
-    const batchNumber = `PCR-${thaiYear}-${Date.now().toString().slice(-4)}`;
-
-    const batch = await prisma.pettyCashReplenishment.create({
-      data: {
-        batchNumber,
-        amount: totalAmount,
-        slipUrl: slipUrl || null,
-        notes: notes || `เบิกชดเชยเงินสดย่อย ${unreplenished.length} รายการ`,
-        transactions: {
-          connect: unreplenished.map(tx => ({ id: tx.id }))
-        }
-      }
+    const expenses = await prisma.accountTransaction.findMany({
+      where: { paymentMethod: 'PETTY_CASH', date: { gte: startOfMonth, lte: endOfMonth } },
+      orderBy: { date: 'asc' }
     });
+    const totalMonthExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const closingBalance = openingBalance + totalMonthTopups - totalMonthExpenses;
 
-    await addLog('เบิกชดเชยเงินสดย่อย', `เบิกชดเชย ${batchNumber} จำนวน ${totalAmount.toLocaleString()} บาท (${unreplenished.length} รายการ)`, 'เงินสดย่อย');
+    const allTopups = await prisma.pettyCashTopup.findMany({});
+    const allTopupsTotal = allTopups.reduce((acc, curr) => acc + curr.amount, 0);
+    const allExpenses = await prisma.accountTransaction.findMany({ where: { paymentMethod: 'PETTY_CASH' } });
+    const allExpensesTotal = allExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const currentCashInHand = baseFund + allTopupsTotal - allExpensesTotal;
 
-    res.json({ success: true, batch });
+    res.json({
+      month: m,
+      year: y,
+      baseFund,
+      openingBalance,
+      topups,
+      topupCount: topups.length,
+      totalMonthTopups,
+      expenses,
+      expenseCount: expenses.length,
+      totalMonthExpenses,
+      closingBalance,
+      currentCashInHand
+    });
   } catch (error) {
-    console.error('Petty cash replenish error:', error);
-    res.status(500).json({ error: 'Failed to replenish petty cash' });
+    console.error('Petty cash detail error:', error);
+    res.status(500).json({ error: 'Failed to fetch petty cash data' });
+  }
+});
+
+app.post('/api/accounting/petty-cash/topup', requireAdmin, async (req, res) => {
+  try {
+    const { amount, date, slipUrl, transferFrom, notes } = req.body;
+    const txDate = date ? new Date(date) : new Date();
+    const thaiYear = txDate.getFullYear() + 543;
+    const count = await prisma.pettyCashTopup.count();
+    const topupNumber = `TOPUP-${thaiYear}-${String(count + 1).padStart(3, '0')}`;
+
+    const topup = await prisma.pettyCashTopup.create({
+      data: {
+        topupNumber,
+        date: txDate,
+        amount: amount ? parseFloat(amount) : 5000,
+        slipUrl: slipUrl || null,
+        transferFrom: transferFrom || 'บัญชีนิติบุคคล / กรรมการ',
+        notes: notes || null
+      }
+    });
+
+    await addLog('เติมเงินสดย่อย', `กรรมการโอนเงินเติมสดย่อย ${topupNumber} จำนวน ${(amount || 5000).toLocaleString()} บาท`, 'เงินสดย่อย');
+    res.json(topup);
+  } catch (error) {
+    console.error('Create petty cash topup error:', error);
+    res.status(500).json({ error: 'Failed to record top-up' });
+  }
+});
+
+app.delete('/api/accounting/petty-cash/topup/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.pettyCashTopup.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete top-up' });
   }
 });
 

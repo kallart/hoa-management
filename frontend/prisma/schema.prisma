@@ -202,6 +202,18 @@ model PettyCashReplenishment {
   updatedAt     DateTime             @updatedAt
 }
 
+model PettyCashTopup {
+  id           String   @id @default(uuid())
+  topupNumber  String   @unique // e.g. TOPUP-2569-10-001
+  date         DateTime @default(now())
+  amount       Float    @default(5000) // เติมครั้งละ 5,000 บาท
+  slipUrl      String?  // สลิปโอนเงินของกรรมการ
+  transferFrom String?  // โอนจากใคร / บัญชีไหน
+  notes        String?  // เช่น เติมครั้งที่ 1 เดือน ต.ค.
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model AccountingSetting {
   id             String   @id @default(uuid())
   pettyCashLimit Float    @default(5000) // วงเงินสดย่อยเริ่มต้น 5,000 บาท
