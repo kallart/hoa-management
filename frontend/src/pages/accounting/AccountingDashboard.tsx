@@ -3,10 +3,42 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Plus, Search, Edit2, Trash2, Eye, ExternalLink, RefreshCw, 
   Wallet, ShieldAlert, ReceiptText, ArrowUpRight, ArrowDownLeft,
-  Calendar, CheckCircle2, Clock, Upload, X, AlertCircle, FileText
+  Calendar, CheckCircle2, Clock, Upload, X, AlertCircle, FileText,
+  Link, Image as ImageIcon
 } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
+
+// --- Google Drive Link & Thumbnail Helpers ---
+export function extractDriveFileId(url: string): string | null {
+  if (!url) return null;
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || 
+                url.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+                url.match(/[-\w]{25,}/);
+  return match ? (match[1] || match[0]) : null;
+}
+
+export function formatImageUrl(url: string): string {
+  if (!url) return '';
+  if (url.includes('drive.google.com')) {
+    const fileId = extractDriveFileId(url);
+    if (fileId) {
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
+  }
+  return url;
+}
+
+export function formatFullImageUrl(url: string): string {
+  if (!url) return '';
+  if (url.includes('drive.google.com')) {
+    const fileId = extractDriveFileId(url);
+    if (fileId) {
+      return `https://lh3.googleusercontent.com/d/${fileId}=s1600`;
+    }
+  }
+  return url;
+}
 
 export default function AccountingDashboard() {
   const location = useLocation();
@@ -43,8 +75,23 @@ export default function AccountingDashboard() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [pettyCashData, setPettyCashData] = useState<any>(null);
+
+  // Batch Import Form State (for 6 months old bills)
+  const [importForm, setImportForm] = useState({
+    driveUrl: '',
+    date: new Date().toISOString().split('T')[0],
+    manualRefNo: '',
+    subType: 'MONTHLY',
+    paymentMethod: 'TRANSFER_MAIN',
+    title: '',
+    category: 'ค่าใช้จ่ายทั่วไป',
+    payee: '',
+    amount: '',
+    notes: ''
+  });
 
   // Topup Form State
   const [topupForm, setTopupForm] = useState({
@@ -350,6 +397,56 @@ export default function AccountingDashboard() {
     }
   };
 
+  // Save Old Bill Import (Google Drive Link)
+  const handleSaveImport = async (continueNext: boolean = false) => {
+    try {
+      if (!importForm.driveUrl || !importForm.title || !importForm.amount) {
+        toast.error('กรุณาระบุลิงก์ Google Drive, รายการ และจำนวนเงิน');
+        return;
+      }
+
+      const txDate = new Date(importForm.date);
+      const thaiYear = txDate.getFullYear() + 543;
+      const num = importForm.subType === 'PETTY_CASH' ? settings?.nextPcNumber || 286 : settings?.nextPvNumber || 16;
+      const docNum = importForm.subType === 'PETTY_CASH'
+        ? `PC-${thaiYear}-${String(num).padStart(4, '0')}`
+        : `PV-${thaiYear}-${String(num).padStart(4, '0')}`;
+
+      await api.post('/api/accounting/transactions', {
+        docNumber: docNum,
+        manualRefNo: importForm.manualRefNo || null,
+        type: 'EXPENSE',
+        subType: importForm.subType,
+        paymentMethod: importForm.paymentMethod,
+        date: txDate,
+        title: importForm.title,
+        category: importForm.category,
+        payee: importForm.payee,
+        amount: importForm.amount,
+        notes: importForm.notes,
+        receiptUrl: importForm.driveUrl,
+        driveUrl: importForm.driveUrl
+      });
+
+      toast.success('บันทึกนำเข้าบิลเก่าสำเร็จ');
+      fetchData();
+
+      if (continueNext) {
+        setImportForm(prev => ({
+          ...prev,
+          driveUrl: '',
+          title: '',
+          amount: '',
+          notes: ''
+        }));
+      } else {
+        setIsImportModalOpen(false);
+      }
+    } catch (error) {
+      toast.error('เกิดข้อผิดพลาดในการนำเข้าบิล');
+    }
+  };
+
   // Replenish Petty Cash
   const handleProcessReplenish = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -447,6 +544,15 @@ export default function AccountingDashboard() {
               <ExternalLink size={16} /> Google Drive
             </a>
           )}
+
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="btn btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', fontSize: '0.9rem', color: '#6D28D9', borderColor: '#DDD6FE' }}
+            title="นำเข้าบิลเก่า 6 เดือนจากลิงก์ Google Drive"
+          >
+            <Upload size={16} /> นำเข้าบิลเก่า 6 เดือน
+          </button>
 
           <button 
             onClick={() => openNewTxModal('EXPENSE', 'MONTHLY')}
@@ -1452,22 +1558,37 @@ export default function AccountingDashboard() {
 
               {/* Attachments Section */}
               <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '16px' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#334155', fontWeight: 600 }}>
-                  📎 อัปโหลดหลักฐานประกอบ (สลิป / บัตร ปชช. / ใบเสร็จ / รูปงาน)
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#334155', fontWeight: 600 }}>
+                    📎 แนบหลักฐานประกอบ (อัปโหลดไฟล์ หรือ วางลิงก์ Google Drive)
+                  </h4>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B' }}>💡 วางลิงก์ Google Drive ได้ทุกช่อง</span>
+                </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   {/* 1. Slip */}
                   <div style={{ backgroundColor: '#FFFFFF', padding: '10px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>1. สลิปโอนเงิน</span>
-                      {txForm.slipUrl && <span style={{ color: '#059669', fontSize: '0.75rem' }}>✓ แนบแล้ว</span>}
+                      {txForm.slipUrl && (
+                        <button type="button" onClick={() => setPreviewImage(txForm.slipUrl)} style={{ border: 'none', background: 'none', color: '#059669', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                          ✓ ดูรูปพรีวิว
+                        </button>
+                      )}
                     </div>
                     <input 
                       type="file" 
                       accept="image/*" 
                       onChange={(e) => handleFileUpload(e, 'slipUrl')}
-                      style={{ fontSize: '0.78rem' }}
+                      style={{ fontSize: '0.78rem', marginBottom: '4px', width: '100%' }}
+                    />
+                    <input 
+                      type="url"
+                      className="form-control"
+                      placeholder="หรือวางลิงก์ Google Drive..."
+                      value={txForm.slipUrl}
+                      onChange={(e) => setTxForm({ ...txForm, slipUrl: e.target.value })}
+                      style={{ fontSize: '0.75rem', height: '28px', padding: '2px 8px' }}
                     />
                   </div>
 
@@ -1475,27 +1596,51 @@ export default function AccountingDashboard() {
                   <div style={{ backgroundColor: '#FFFFFF', padding: '10px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>2. บัตร ปชช.+ลายเซ็น</span>
-                      {txForm.idCardUrl && <span style={{ color: '#059669', fontSize: '0.75rem' }}>✓ แนบแล้ว</span>}
+                      {txForm.idCardUrl && (
+                        <button type="button" onClick={() => setPreviewImage(txForm.idCardUrl)} style={{ border: 'none', background: 'none', color: '#2563EB', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                          ✓ ดูรูปพรีวิว
+                        </button>
+                      )}
                     </div>
                     <input 
                       type="file" 
                       accept="image/*" 
                       onChange={(e) => handleFileUpload(e, 'idCardUrl')}
-                      style={{ fontSize: '0.78rem' }}
+                      style={{ fontSize: '0.78rem', marginBottom: '4px', width: '100%' }}
+                    />
+                    <input 
+                      type="url"
+                      className="form-control"
+                      placeholder="หรือวางลิงก์ Google Drive..."
+                      value={txForm.idCardUrl}
+                      onChange={(e) => setTxForm({ ...txForm, idCardUrl: e.target.value })}
+                      style={{ fontSize: '0.75rem', height: '28px', padding: '2px 8px' }}
                     />
                   </div>
 
                   {/* 3. Receipt */}
                   <div style={{ backgroundColor: '#FFFFFF', padding: '10px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>3. ใบเสร็จ / ใบกำกับภาษี</span>
-                      {txForm.receiptUrl && <span style={{ color: '#059669', fontSize: '0.75rem' }}>✓ แนบแล้ว</span>}
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>3. ใบเสร็จ / ใบสั่งซื้อ</span>
+                      {txForm.receiptUrl && (
+                        <button type="button" onClick={() => setPreviewImage(txForm.receiptUrl)} style={{ border: 'none', background: 'none', color: '#D97706', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                          ✓ ดูรูปพรีวิว
+                        </button>
+                      )}
                     </div>
                     <input 
                       type="file" 
                       accept="image/*" 
                       onChange={(e) => handleFileUpload(e, 'receiptUrl')}
-                      style={{ fontSize: '0.78rem' }}
+                      style={{ fontSize: '0.78rem', marginBottom: '4px', width: '100%' }}
+                    />
+                    <input 
+                      type="url"
+                      className="form-control"
+                      placeholder="หรือวางลิงก์ Google Drive..."
+                      value={txForm.receiptUrl}
+                      onChange={(e) => setTxForm({ ...txForm, receiptUrl: e.target.value })}
+                      style={{ fontSize: '0.75rem', height: '28px', padding: '2px 8px' }}
                     />
                   </div>
 
@@ -1503,12 +1648,34 @@ export default function AccountingDashboard() {
                   <div style={{ backgroundColor: '#FFFFFF', padding: '10px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>4. รูปถ่ายหน้างาน ({txForm.workPhotos.length})</span>
+                      {txForm.workPhotos.length > 0 && (
+                        <button type="button" onClick={() => setPreviewImage(txForm.workPhotos[0])} style={{ border: 'none', background: 'none', color: '#7C3AED', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                          ✓ ดูรูปพรีวิว
+                        </button>
+                      )}
                     </div>
                     <input 
                       type="file" 
                       accept="image/*" 
                       onChange={(e) => handleFileUpload(e, 'workPhoto')}
-                      style={{ fontSize: '0.78rem' }}
+                      style={{ fontSize: '0.78rem', marginBottom: '4px', width: '100%' }}
+                    />
+                    <input 
+                      type="url"
+                      className="form-control"
+                      placeholder="หรือวางลิงก์ Google Drive แล้วกด Enter..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = (e.target as HTMLInputElement).value;
+                          if (val) {
+                            setTxForm(prev => ({ ...prev, workPhotos: [...prev.workPhotos, val] }));
+                            (e.target as HTMLInputElement).value = '';
+                            toast.success('เพิ่มลิงก์รูปหน้างานแล้ว');
+                          }
+                        }
+                      }}
+                      style={{ fontSize: '0.75rem', height: '28px', padding: '2px 8px' }}
                     />
                   </div>
                 </div>
@@ -1829,6 +1996,199 @@ export default function AccountingDashboard() {
         </div>
       )}
 
+      {/* --- MODAL 5: IMPORT OLD BILLS (นำเข้าบิลเก่าจาก GOOGLE DRIVE 6 เดือน) --- */}
+      {isImportModalOpen && (
+        <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }} onClick={() => setIsImportModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '840px', width: '96%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal-header">
+              <div>
+                <h2 className="h2" style={{ margin: 0, fontSize: '1.25rem' }}>
+                  📥 นำเข้าบิลเก่าจาก Google Drive (ย้อนหลัง 6 เดือน)
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#6B7280' }}>
+                  วางลิงก์รูปภาพจาก Google Drive ระบบจะดึงรูปมาแสดงทางซ้าย และกรอกข้อมูลบันทึกได้อย่างรวดเร็ว
+                </p>
+              </div>
+              <button className="btn-icon" onClick={() => setIsImportModalOpen(false)}>✕</button>
+            </div>
+
+            <div className="modal-body" style={{ padding: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                {/* Left: Image Preview from Google Drive */}
+                <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '340px' }}>
+                  {importForm.driveUrl ? (
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <img 
+                        src={formatFullImageUrl(importForm.driveUrl)} 
+                        alt="พรีวิวบิลจาก Google Drive" 
+                        style={{ maxWidth: '100%', maxHeight: '380px', borderRadius: '8px', objectFit: 'contain', border: '1px solid #CBD5E1' }}
+                        onError={(e) => {
+                          (e.target as any).style.display = 'none';
+                        }}
+                      />
+                      <a 
+                        href={importForm.driveUrl} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        style={{ marginTop: '10px', fontSize: '0.8rem', color: '#2563EB', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <ExternalLink size={14} /> เปิดดูใน Google Drive
+                      </a>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: '#94A3B8', padding: '40px 20px' }}>
+                      <ImageIcon size={48} style={{ opacity: 0.4, marginBottom: '10px' }} />
+                      <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                        วางลิงก์รูปบิลจาก Google Drive ทางขวา<br />รูปภาพจะแสดงพรีวิวตรงนี้ทันที
+                      </p>
+                      <span style={{ fontSize: '0.78rem', color: '#94A3B8', display: 'block', marginTop: '6px' }}>
+                        (โฟลเดอร์ใน Drive ตั้งแชร์เป็น 'ทุกคนที่มีลิงก์มีสิทธิ์ดู')
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Form to quickly record */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, fontSize: '0.88rem' }}>1. ลิงก์รูปภาพใน Google Drive *</label>
+                    <input 
+                      type="url" 
+                      className="form-control" 
+                      placeholder="https://drive.google.com/file/d/.../view"
+                      value={importForm.driveUrl}
+                      onChange={(e) => setImportForm({ ...importForm, driveUrl: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem' }}>วันที่ของบิล *</label>
+                      <input 
+                        type="date" 
+                        className="form-control" 
+                        value={importForm.date}
+                        onChange={(e) => setImportForm({ ...importForm, date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem' }}>เลขที่เดิม (#)</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="เช่น #1, #15, #285"
+                        value={importForm.manualRefNo}
+                        onChange={(e) => setImportForm({ ...importForm, manualRefNo: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem' }}>ประเภท</label>
+                      <select 
+                        className="form-control" 
+                        value={importForm.subType}
+                        onChange={(e) => {
+                          const st = e.target.value;
+                          setImportForm(prev => ({ ...prev, subType: st, paymentMethod: st === 'PETTY_CASH' ? 'PETTY_CASH' : 'TRANSFER_MAIN' }));
+                        }}
+                      >
+                        <option value="MONTHLY">ค่าใช้จ่ายประจำเดือน</option>
+                        <option value="REPAIR">ค่าปรับปรุงซ่อมแซม</option>
+                        <option value="PETTY_CASH">วงเงินสดย่อย</option>
+                        <option value="OTHER">อื่นๆ</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem' }}>วิธีจ่ายเงิน</label>
+                      <select 
+                        className="form-control" 
+                        value={importForm.paymentMethod}
+                        onChange={(e) => setImportForm({ ...importForm, paymentMethod: e.target.value })}
+                      >
+                        <option value="TRANSFER_MAIN">โอนบัญชีนิติ (KBIZ)</option>
+                        <option value="PETTY_CASH">เงินสดย่อย (K+)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.85rem' }}>รายการ / รายละเอียดค่าใช้จ่าย *</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="เช่น ค่าซ่อมแซมสายไฟ, ค่าเครื่องดื่ม"
+                      value={importForm.title}
+                      onChange={(e) => setImportForm({ ...importForm, title: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem' }}>ผู้รับเงิน / ร้านค้า</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="เช่น ช่างศักดิ์ดา, Amazon"
+                        value={importForm.payee}
+                        onChange={(e) => setImportForm({ ...importForm, payee: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem' }}>จำนวนเงิน (บาท) *</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="form-control" 
+                        placeholder="เช่น 3000.00"
+                        value={importForm.amount}
+                        onChange={(e) => setImportForm({ ...importForm, amount: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.85rem' }}>หมายเหตุ</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="ข้อความเพิ่มเติม..."
+                      value={importForm.notes}
+                      onChange={(e) => setImportForm({ ...importForm, notes: e.target.value })}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                    <button 
+                      type="button" 
+                      className="btn btn-primary"
+                      onClick={() => handleSaveImport(true)}
+                      style={{ flex: 1, backgroundColor: '#7C3AED', borderColor: '#7C3AED' }}
+                    >
+                      + บันทึกและทำใบถัดไป
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary"
+                      onClick={() => handleSaveImport(false)}
+                      style={{ flex: 1 }}
+                    >
+                      บันทึกและปิด
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- PREVIEW IMAGE MODAL --- */}
       {previewImage && (
         <div 
@@ -1836,26 +2196,36 @@ export default function AccountingDashboard() {
           style={{ display: 'flex', zIndex: 1100, backgroundColor: 'rgba(0,0,0,0.85)' }} 
           onClick={() => setPreviewImage(null)}
         >
-          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
-            <button 
-              onClick={() => setPreviewImage(null)}
-              style={{ 
-                position: 'absolute', 
-                top: '-40px', 
-                right: '0', 
-                backgroundColor: 'transparent', 
-                border: 'none', 
-                color: 'white', 
-                cursor: 'pointer',
-                fontSize: '1.5rem'
-              }}
-            >
-              ✕ ปิด
-            </button>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '10px' }}>
+              {previewImage.includes('drive.google.com') ? (
+                <a 
+                  href={previewImage} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  style={{ color: '#93C5FD', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}
+                >
+                  <ExternalLink size={16} /> เปิดต้นฉบับใน Google Drive
+                </a>
+              ) : <div />}
+              <button 
+                onClick={() => setPreviewImage(null)}
+                style={{ 
+                  backgroundColor: 'transparent', 
+                  border: 'none', 
+                  color: 'white', 
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                ✕ ปิด
+              </button>
+            </div>
             <img 
-              src={previewImage} 
+              src={formatFullImageUrl(previewImage)} 
               alt="หลักฐานประกอบ" 
-              style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }} 
+              style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', objectFit: 'contain' }} 
             />
           </div>
         </div>
