@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, Wrench, Users, LogOut } from 'lucide-react';
+import { Calculator, Wrench, Wallet, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Home: React.FC = () => {
@@ -69,18 +69,18 @@ const Home: React.FC = () => {
             <p style={{ color: '#6B7280', textAlign: 'center', margin: 0, lineHeight: '1.5' }}>จัดการแจ้งซ่อมบำรุง, ดูแลพื้นที่ส่วนกลาง และระบบสาธารณูปโภค</p>
           </div>
 
-          {/* Option 3: Committee Meeting System */}
+          {/* Option 3: Income/Expense Accounting System */}
           <div 
-            onClick={() => alert('ระบบกำลังอยู่ระหว่างการพัฒนา (Coming Soon)')}
+            onClick={() => alert('ระบบบันทึกบัญชี รายรับรายจ่าย กำลังอยู่ระหว่างการพัฒนา (Coming Soon)')}
             style={{ width: '320px', backgroundColor: 'white', padding: '40px 30px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s, boxShadow 0.2s', borderTop: '5px solid #8B5CF6' }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px)'; e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'; }}
           >
             <div style={{ width: '80px', height: '80px', backgroundColor: '#EDE9FE', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '25px', color: '#8B5CF6' }}>
-              <Users size={40} />
+              <Wallet size={40} />
             </div>
-            <h3 style={{ fontSize: '1.4rem', color: '#1F2937', margin: '0 0 15px 0', textAlign: 'center' }}>งานประชุมคณะกรรมการ</h3>
-            <p style={{ color: '#6B7280', textAlign: 'center', margin: 0, lineHeight: '1.5' }}>ระบบวาระการประชุม, บันทึกการประชุม และลงมติคณะกรรมการ</p>
+            <h3 style={{ fontSize: '1.4rem', color: '#1F2937', margin: '0 0 15px 0', textAlign: 'center' }}>การบันทึกบัญชี รายรับรายจ่าย</h3>
+            <p style={{ color: '#6B7280', textAlign: 'center', margin: 0, lineHeight: '1.5' }}>บันทึกรายรับ-รายจ่าย, สรุปงบการเงิน และรายงานบัญชีหมู่บ้าน</p>
             <span style={{ marginTop: '20px', padding: '5px 15px', backgroundColor: '#F3F4F6', color: '#4B5563', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>Coming Soon</span>
           </div>
 
