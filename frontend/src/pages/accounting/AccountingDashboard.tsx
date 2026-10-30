@@ -4,8 +4,9 @@ import {
   Plus, Search, Edit2, Trash2, Eye, ExternalLink, RefreshCw, 
   Wallet, ShieldAlert, ReceiptText, ArrowUpRight, ArrowDownLeft,
   Calendar, CheckCircle2, Clock, Upload, X, AlertCircle, FileText,
-  Link, Image as ImageIcon, Printer
+  Link, Image as ImageIcon, Printer, Download, Copy
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -80,6 +81,21 @@ export function thaiBahtText(num: number): string {
   return result;
 }
 
+// --- Thai Full Date Formatter (เช่น วันที่ 17 ตุลาคม 2569) ---
+export function formatThaiFullDate(dateStr: string | Date): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  const thaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  const day = d.getDate();
+  const month = thaiMonths[d.getMonth()];
+  const year = d.getFullYear() + 543;
+  return `วันที่ ${day} ${month} ${year}`;
+}
+
 export default function AccountingDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -118,6 +134,7 @@ export default function AccountingDashboard() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [viewingTx, setViewingTx] = useState<any | null>(null);
+  const [voucherTab, setVoucherTab] = useState<'VISUAL' | 'OFFICIAL'>('VISUAL');
   const [highlightedTxId, setHighlightedTxId] = useState<string | null>(null);
   const [pettyCashData, setPettyCashData] = useState<any>(null);
 
@@ -376,6 +393,58 @@ export default function AccountingDashboard() {
       fetchData();
     } catch (error) {
       toast.error('ไม่สามารถลบรายการได้');
+    }
+  };
+
+  // Export Card Image (for LINE / sharing)
+  const handleDownloadCardImage = async () => {
+    const cardEl = document.getElementById('visual-voucher-card');
+    if (!cardEl || !viewingTx) return;
+    const toastId = toast.loading('กำลังสร้างรูปภาพการ์ด...');
+    try {
+      const canvas = await html2canvas(cardEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#FFFFFF'
+      });
+      const link = document.createElement('a');
+      const ref = viewingTx.manualRefNo ? viewingTx.manualRefNo.replace('#', '').trim() : viewingTx.docNumber;
+      link.download = `Voucher_${ref}_${viewingTx.title}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast.success('ดาวน์โหลดรูปภาพสำเร็จ! พร้อมส่ง LINE ทันที', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('ไม่สามารถดาวน์โหลดเป็นภาพได้ คุณสามารถกดปุ่ม "พิมพ์ / PDF" หรือแคปหน้าจอได้เลยครับ', { id: toastId });
+    }
+  };
+
+  const handleCopyCardImage = async () => {
+    const cardEl = document.getElementById('visual-voucher-card');
+    if (!cardEl || !viewingTx) return;
+    const toastId = toast.loading('กำลังคัดลอกรูปภาพ...');
+    try {
+      const canvas = await html2canvas(cardEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#FFFFFF'
+      });
+      canvas.toBlob(async (blob) => {
+        if (!blob) throw new Error('Blob creation failed');
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          toast.success('คัดลอกรูปภาพแล้ว! สามารถกด Ctrl+V วางใน LINE ได้เลย 📋', { id: toastId });
+        } catch (clipErr) {
+          toast.error('เบราว์เซอร์ไม่อนุญาตให้วางลงคลิปบอร์ด แนะนำให้กดปุ่ม "ดาวน์โหลดรูป" แทนครับ', { id: toastId });
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error('เกิดข้อผิดพลาดในการคัดลอกรูป', { id: toastId });
     }
   };
 
@@ -2325,319 +2394,555 @@ export default function AccountingDashboard() {
       )}
 
       {/* --- MODAL: VOUCHER / TRANSACTION DETAIL (ใบสำคัญจ่าย & เปิดดูรายการ) --- */}
-      {viewingTx && (
-        <div 
-          className="modal-overlay" 
-          style={{ display: 'flex', zIndex: 1050, backgroundColor: 'rgba(0,0,0,0.65)' }} 
-          onClick={() => setViewingTx(null)}
-        >
+      {viewingTx && (() => {
+        let workPhotos: string[] = [];
+        if (viewingTx.workPhotos) {
+          try {
+            workPhotos = typeof viewingTx.workPhotos === 'string' ? JSON.parse(viewingTx.workPhotos) : viewingTx.workPhotos;
+          } catch (e) {
+            workPhotos = [viewingTx.workPhotos];
+          }
+        }
+        const slipImg = viewingTx.slipUrl;
+        const receiptImg = viewingTx.receiptUrl || (workPhotos.length > 0 && !viewingTx.slipUrl ? null : (workPhotos.length > 0 && !viewingTx.receiptUrl ? workPhotos[0] : null));
+        const extraPhotos = workPhotos.filter(p => p !== receiptImg);
+
+        return (
           <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ maxWidth: '760px', width: '95%', padding: '0', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+            className="modal-overlay" 
+            style={{ display: 'flex', zIndex: 1050, backgroundColor: 'rgba(0,0,0,0.7)' }} 
+            onClick={() => setViewingTx(null)}
           >
-            {/* Header bar */}
-            <div style={{ backgroundColor: '#1E293B', color: 'white', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FileText size={22} color="#38BDF8" />
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#F8FAFC' }}>
-                    {viewingTx.subType === 'PETTY_CASH' || viewingTx.paymentMethod === 'PETTY_CASH' || viewingTx.docNumber?.startsWith('PC-')
-                      ? 'ใบสำคัญจ่ายเงินสดย่อย (Petty Cash Voucher)'
-                      : viewingTx.type === 'EXPENSE'
-                      ? 'ใบสำคัญจ่าย (Payment Voucher)'
-                      : 'ใบสำคัญรับ (Receipt Voucher)'}
-                  </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
-                    เลขที่: {viewingTx.docNumber} {viewingTx.manualRefNo ? `(เลขเดิม: ${viewingTx.manualRefNo})` : ''}
-                  </span>
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ maxWidth: voucherTab === 'VISUAL' ? '920px' : '780px', width: '96%', padding: '0', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '92vh', transition: 'max-width 0.2s' }}
+            >
+              {/* Header bar */}
+              <div style={{ backgroundColor: '#1E293B', color: 'white', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FileText size={22} color="#38BDF8" />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#F8FAFC' }}>
+                      {viewingTx.subType === 'PETTY_CASH' || viewingTx.paymentMethod === 'PETTY_CASH' || viewingTx.docNumber?.startsWith('PC-')
+                        ? 'ใบสำคัญจ่ายเงินสดย่อย (Petty Cash Voucher)'
+                        : viewingTx.type === 'EXPENSE'
+                        ? 'ใบสำคัญจ่าย (Payment Voucher)'
+                        : 'ใบสำคัญรับ (Receipt Voucher)'}
+                    </h3>
+                    <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
+                      เลขที่: {viewingTx.docNumber} {viewingTx.manualRefNo ? `(เลขเดิม: ${viewingTx.manualRefNo})` : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Switcher: Visual Card vs Official Voucher */}
+                <div style={{ display: 'flex', backgroundColor: '#0F172A', padding: '3px', borderRadius: '8px', border: '1px solid #334155' }}>
+                  <button
+                    type="button"
+                    onClick={() => setVoucherTab('VISUAL')}
+                    style={{
+                      backgroundColor: voucherTab === 'VISUAL' ? '#E11D48' : 'transparent',
+                      color: voucherTab === 'VISUAL' ? '#FFFFFF' : '#94A3B8',
+                      border: 'none',
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <ImageIcon size={14} /> แบบการ์ดรูปภาพ (ส่ง LINE)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVoucherTab('OFFICIAL')}
+                    style={{
+                      backgroundColor: voucherTab === 'OFFICIAL' ? '#2563EB' : 'transparent',
+                      color: voucherTab === 'OFFICIAL' ? '#FFFFFF' : '#94A3B8',
+                      border: 'none',
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <FileText size={14} /> แบบทางการ (มีลายเซ็น)
+                  </button>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {voucherTab === 'VISUAL' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleCopyCardImage}
+                        style={{
+                          backgroundColor: '#0284C7',
+                          border: 'none',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 600
+                        }}
+                        title="คัดลอกรูปภาพเพื่อไปกด Ctrl+V ใน LINE ได้ทันที"
+                      >
+                        <Copy size={15} /> คัดลอกรูป
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadCardImage}
+                        style={{
+                          backgroundColor: '#059669',
+                          border: 'none',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 600
+                        }}
+                        title="ดาวน์โหลดเป็นการ์ดรูปภาพ PNG สำหรับส่ง LINE"
+                      >
+                        <Download size={15} /> บันทึกรูป
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    style={{
+                      backgroundColor: '#334155',
+                      border: '1px solid #475569',
+                      color: '#F8FAFC',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.82rem',
+                      fontWeight: 500
+                    }}
+                    title="พิมพ์ / บันทึก PDF"
+                  >
+                    <Printer size={15} /> พิมพ์ / PDF
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tx = viewingTx;
+                      setViewingTx(null);
+                      openEditTxModal(tx);
+                    }}
+                    style={{
+                      backgroundColor: '#475569',
+                      border: 'none',
+                      color: 'white',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.82rem',
+                      fontWeight: 500
+                    }}
+                    title="แก้ไขรายการนี้"
+                  >
+                    <Edit2 size={15} /> แก้ไข
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingTx(null)}
+                    style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '1.25rem', padding: '0 6px', lineHeight: 1 }}
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  style={{
-                    backgroundColor: '#334155',
-                    border: '1px solid #475569',
-                    color: '#F8FAFC',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.82rem',
-                    fontWeight: 500
-                  }}
-                  title="พิมพ์เอกสารใบสำคัญจ่าย"
-                >
-                  <Printer size={15} /> พิมพ์ใบสำคัญ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const tx = viewingTx;
-                    setViewingTx(null);
-                    openEditTxModal(tx);
-                  }}
-                  style={{
-                    backgroundColor: '#4338CA',
-                    border: 'none',
-                    color: 'white',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.82rem',
-                    fontWeight: 500
-                  }}
-                  title="แก้ไขรายการนี้"
-                >
-                  <Edit2 size={15} /> แก้ไข
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewingTx(null)}
-                  style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '1.25rem', padding: '0 6px', lineHeight: 1 }}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
+              {/* Scrollable Content (Printable Container) */}
+              <div 
+                id="printable-voucher" 
+                style={{ 
+                  backgroundColor: voucherTab === 'VISUAL' ? '#F3F4F6' : '#FFFFFF', 
+                  padding: voucherTab === 'VISUAL' ? '24px' : '24px', 
+                  overflowY: 'auto', 
+                  flex: 1 
+                }}
+              >
+                {voucherTab === 'VISUAL' ? (
+                  /* ========================================================
+                     --- 1. VISUAL CARD (ตรงตามรูปแบบตัวอย่างที่ส่งมา 100%) ---
+                     ======================================================== */
+                  <div
+                    id="visual-voucher-card"
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      padding: '36px 44px',
+                      borderRadius: '8px',
+                      maxWidth: '820px',
+                      margin: '0 auto',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
+                      fontFamily: "'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif"
+                    }}
+                  >
+                    {/* Header: วันที่ / รายการ ทางซ้าย | ใช้วงเงินสดย่อย #... ทางขวา */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
+                      <div>
+                        <h1 style={{ margin: '0 0 8px 0', fontSize: '1.85rem', fontWeight: 800, color: '#000000', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+                          {formatThaiFullDate(viewingTx.date)}
+                        </h1>
+                        <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
+                          {viewingTx.title}
+                        </h2>
+                      </div>
 
-            {/* Scrollable Voucher Content */}
-            <div id="printable-voucher" style={{ padding: '24px', backgroundColor: '#FFFFFF', overflowY: 'auto', flex: 1 }}>
-              {/* Organization Header */}
-              <div style={{ borderBottom: '2px solid #E2E8F0', paddingBottom: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <h2 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', color: '#0F172A', fontWeight: 'bold' }}>
-                    นิติบุคคลหมู่บ้านจัดสรร รอยัล ราชาวดี
-                  </h2>
-                  <div style={{ fontSize: '0.85rem', color: '#64748B' }}>
-                    ซอยพุทธบูชา 39 แขวงบางมด เขตทุ่งครุ กรุงเทพมหานคร 10140
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ 
-                    display: 'inline-block',
-                    padding: '4px 12px', 
-                    borderRadius: '20px', 
-                    fontSize: '0.85rem', 
-                    fontWeight: 'bold',
-                    backgroundColor: viewingTx.type === 'EXPENSE' ? '#FEF2F2' : '#ECFDF5',
-                    color: viewingTx.type === 'EXPENSE' ? '#DC2626' : '#059669',
-                    border: `1px solid ${viewingTx.type === 'EXPENSE' ? '#FECACA' : '#A7F3D0'}`
-                  }}>
-                    {viewingTx.type === 'EXPENSE' ? '● จ่ายเงินเรียบร้อย' : '● บันทึกรับเรียบร้อย'}
-                  </span>
-                  <div style={{ marginTop: '6px', fontSize: '0.85rem', color: '#475569' }}>
-                    วันที่: <strong>{new Date(viewingTx.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>
-                  </div>
-                </div>
-              </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.2 }}>
+                          <span style={{ color: '#E11D48' }}>
+                            {viewingTx.subType === 'PETTY_CASH' || viewingTx.paymentMethod === 'PETTY_CASH' || viewingTx.docNumber?.startsWith('PC-')
+                              ? 'ใช้วงเงินสดย่อย'
+                              : 'จ่ายผ่านบัญชีนิติบุคคล'}
+                          </span>{' '}
+                          <span style={{ color: '#000000' }}>
+                            {viewingTx.manualRefNo
+                              ? (viewingTx.manualRefNo.startsWith('#') ? viewingTx.manualRefNo : `# ${viewingTx.manualRefNo}`)
+                              : `# ${viewingTx.docNumber}`}
+                          </span>
+                        </div>
+                        {viewingTx.payee && (
+                          <div style={{ fontSize: '0.95rem', color: '#64748B', marginTop: '6px', fontWeight: 500 }}>
+                            {viewingTx.payee} {viewingTx.amount ? `(${Number(viewingTx.amount).toLocaleString()} บ.)` : ''}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-              {/* Voucher Meta Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>เลขที่เอกสารระบบ</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1E293B' }}>{viewingTx.docNumber}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>เลขเดิม (อ้างอิง)</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#7C3AED' }}>{viewingTx.manualRefNo || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>ผู้รับเงิน / ร้านค้า</div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
-                    {viewingTx.payee || '-'}
-                    {viewingTx.payeePromptpay && (
-                      <span style={{ fontSize: '0.82rem', color: '#2563EB', marginLeft: '6px' }}>(พร้อมเพย์: {viewingTx.payeePromptpay})</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>วิธีชำระเงิน</div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: viewingTx.paymentMethod === 'PETTY_CASH' ? '#7C3AED' : '#0284C7' }}>
-                    {viewingTx.paymentMethod === 'PETTY_CASH' ? '💵 จ่ายจากวงเงินสดย่อย (Petty Cash)' : '🏦 โอนผ่านบัญชีนิติบุคคล (KBIZ)'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Items Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#F1F5F9', borderBottom: '2px solid #CBD5E1' }}>
-                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>ลำดับ</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>รายการ / วัตถุประสงค์</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>หมวดหมู่</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'right', fontSize: '0.85rem', color: '#475569' }}>จำนวนเงิน (บาท)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <td style={{ padding: '14px', fontSize: '0.9rem', color: '#64748B' }}>1</td>
-                    <td style={{ padding: '14px', fontSize: '0.95rem', fontWeight: 600, color: '#1E293B' }}>
-                      {viewingTx.title}
-                      {viewingTx.notes && (
-                        <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '4px' }}>
-                          หมายเหตุ: {viewingTx.notes}
+                    {/* 2 คอลัมน์เคียงข้างกัน: ซ้าย = ใบเสร็จ/บิล | ขวา = สลิปโอนเงิน */}
+                    <div style={{ display: 'grid', gridTemplateColumns: (receiptImg && slipImg) ? '1fr 1fr' : '1fr', gap: '28px', alignItems: 'start' }}>
+                      {/* คอลัมน์ซ้าย: ใบเสร็จ / บิล */}
+                      {receiptImg && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <img
+                            src={formatFullImageUrl(receiptImg)}
+                            alt="ใบเสร็จ / บิลสั่งซื้อ"
+                            crossOrigin="anonymous"
+                            style={{
+                              width: '100%',
+                              maxHeight: '660px',
+                              objectFit: 'contain',
+                              borderRadius: '4px',
+                              boxShadow: '0 2px 10px rgba(0,0,0,0.06)'
+                            }}
+                          />
                         </div>
                       )}
-                    </td>
-                    <td style={{ padding: '14px', fontSize: '0.85rem', color: '#64748B' }}>
-                      {viewingTx.category || (viewingTx.subType === 'REPAIR' ? 'ซ่อมแซม' : viewingTx.subType === 'PETTY_CASH' ? 'สดย่อย' : 'ประจำเดือน')}
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'right', fontSize: '1.05rem', fontWeight: 'bold', color: '#0F172A' }}>
-                      {Number(viewingTx.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr style={{ backgroundColor: '#FAFBFD', borderTop: '2px solid #CBD5E1' }}>
-                    <td colSpan={2} style={{ padding: '14px', fontSize: '0.88rem', color: '#475569' }}>
-                      จำนวนเงินตัวอักษร: <strong style={{ color: '#0F172A' }}>({thaiBahtText(Number(viewingTx.amount))})</strong>
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'right', fontWeight: 'bold', fontSize: '0.95rem', color: '#475569' }}>
-                      รวมทั้งสิ้น:
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'right', fontSize: '1.25rem', fontWeight: 'bold', color: viewingTx.type === 'EXPENSE' ? '#DC2626' : '#059669' }}>
-                      {Number(viewingTx.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
 
-              {/* Attachments Section */}
-              <div style={{ marginTop: '20px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    📎 หลักฐานประกอบรายการที่แนบไว้ ({[viewingTx.slipUrl, viewingTx.idCardUrl, viewingTx.receiptUrl, ...(viewingTx.workPhotos ? (typeof viewingTx.workPhotos === 'string' ? JSON.parse(viewingTx.workPhotos || '[]') : viewingTx.workPhotos) : [])].filter(Boolean).length} รายการ)
-                  </h4>
-                  {viewingTx.driveUrl && (
-                    <a
-                      href={viewingTx.driveUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ fontSize: '0.82rem', color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <ExternalLink size={14} /> โฟลเดอร์ Google Drive
-                    </a>
-                  )}
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
-                  {viewingTx.slipUrl && (
-                    <div 
-                      onClick={() => setPreviewImage(viewingTx.slipUrl)}
-                      style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
-                      title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
-                    >
-                      <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#ECFDF5' }}>
-                        <img src={formatImageUrl(viewingTx.slipUrl)} alt="สลิปโอนเงิน" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-                      </div>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#059669' }}>1. สลิปโอนเงิน 🔍</span>
-                    </div>
-                  )}
-
-                  {viewingTx.idCardUrl && (
-                    <div 
-                      onClick={() => setPreviewImage(viewingTx.idCardUrl)}
-                      style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
-                      title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
-                    >
-                      <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#EFF6FF' }}>
-                        <img src={formatImageUrl(viewingTx.idCardUrl)} alt="บัตร ปชช." style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-                      </div>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#2563EB' }}>2. บัตร ปชช. / สัญญา 🔍</span>
-                    </div>
-                  )}
-
-                  {viewingTx.receiptUrl && (
-                    <div 
-                      onClick={() => setPreviewImage(viewingTx.receiptUrl)}
-                      style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
-                      title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
-                    >
-                      <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#FEF3C7' }}>
-                        <img src={formatImageUrl(viewingTx.receiptUrl)} alt="ใบเสร็จ/สั่งซื้อ" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-                      </div>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#D97706' }}>3. สั่งซื้อ / ใบเสร็จ 🔍</span>
-                    </div>
-                  )}
-
-                  {/* Work photos */}
-                  {(() => {
-                    let photos: string[] = [];
-                    if (viewingTx.workPhotos) {
-                      try { photos = typeof viewingTx.workPhotos === 'string' ? JSON.parse(viewingTx.workPhotos) : viewingTx.workPhotos; } catch (e) { photos = [viewingTx.workPhotos]; }
-                    }
-                    return photos.map((p, idx) => (
-                      <div 
-                        key={idx}
-                        onClick={() => setPreviewImage(p)}
-                        style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
-                        title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
-                      >
-                        <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#F3E8FF' }}>
-                          <img src={formatImageUrl(p)} alt={`รูปหน้างาน ${idx+1}`} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                      {/* คอลัมน์ขวา: สลิปโอนเงิน */}
+                      {slipImg && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <img
+                            src={formatFullImageUrl(slipImg)}
+                            alt="สลิปโอนเงิน"
+                            crossOrigin="anonymous"
+                            style={{
+                              width: '100%',
+                              maxHeight: '660px',
+                              objectFit: 'contain',
+                              borderRadius: '4px',
+                              boxShadow: '0 2px 10px rgba(0,0,0,0.06)'
+                            }}
+                          />
                         </div>
-                        <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#7C3AED' }}>4. รูปสินค้า/งาน ({idx+1}) 🔍</span>
-                      </div>
-                    ));
-                  })()}
-                </div>
+                      )}
 
-                {!viewingTx.slipUrl && !viewingTx.idCardUrl && !viewingTx.receiptUrl && (!viewingTx.workPhotos || viewingTx.workPhotos.length === 0) && (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#94A3B8', fontSize: '0.85rem', backgroundColor: '#F8FAFC', borderRadius: '8px' }}>
-                    ไม่มีไฟล์หลักฐานแนบไว้ในรายการนี้
+                      {!receiptImg && !slipImg && (
+                        <div style={{ padding: '60px 20px', textAlign: 'center', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '2px dashed #CBD5E1', color: '#94A3B8' }}>
+                          <ImageIcon size={48} style={{ margin: '0 auto 12px auto', opacity: 0.5 }} />
+                          <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>ยังไม่มีรูปใบเสร็จหรือสลิปโอนเงินที่แนบไว้</div>
+                          <div style={{ fontSize: '0.9rem', marginTop: '4px' }}>คุณสามารถกดปุ่ม "แก้ไข" เพื่อแนบรูปสลิปหรือวางลิงก์ Google Drive ได้ครับ</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* รูปหน้างานเพิ่มเติม (ถ้ามี) */}
+                    {extraPhotos.length > 0 && (
+                      <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px dashed #CBD5E1' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#334155', marginBottom: '14px' }}>
+                          รูปถ่ายสินค้า / หน้างานเพิ่มเติม:
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${extraPhotos.length > 2 ? '180px' : '260px'}, 1fr))`, gap: '16px' }}>
+                          {extraPhotos.map((p, idx) => (
+                            <img
+                              key={idx}
+                              src={formatFullImageUrl(p)}
+                              alt={`รูปถ่าย ${idx + 1}`}
+                              crossOrigin="anonymous"
+                              style={{
+                                width: '100%',
+                                maxHeight: '400px',
+                                objectFit: 'contain',
+                                borderRadius: '4px',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ========================================================
+                     --- 2. OFFICIAL VOUCHER (แบบทางการ มีแจกแจง + ลายเซ็น) ---
+                     ======================================================== */
+                  <div>
+                    {/* Organization Header */}
+                    <div style={{ borderBottom: '2px solid #E2E8F0', paddingBottom: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h2 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', color: '#0F172A', fontWeight: 'bold' }}>
+                          นิติบุคคลหมู่บ้านจัดสรร รอยัล ราชาวดี
+                        </h2>
+                        <div style={{ fontSize: '0.85rem', color: '#64748B' }}>
+                          ซอยพุทธบูชา 39 แขวงบางมด เขตทุ่งครุ กรุงเทพมหานคร 10140
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          padding: '4px 12px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.85rem', 
+                          fontWeight: 'bold',
+                          backgroundColor: viewingTx.type === 'EXPENSE' ? '#FEF2F2' : '#ECFDF5',
+                          color: viewingTx.type === 'EXPENSE' ? '#DC2626' : '#059669',
+                          border: `1px solid ${viewingTx.type === 'EXPENSE' ? '#FECACA' : '#A7F3D0'}`
+                        }}>
+                          {viewingTx.type === 'EXPENSE' ? '● จ่ายเงินเรียบร้อย' : '● บันทึกรับเรียบร้อย'}
+                        </span>
+                        <div style={{ marginTop: '6px', fontSize: '0.85rem', color: '#475569' }}>
+                          วันที่: <strong>{new Date(viewingTx.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Voucher Meta Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748B' }}>เลขที่เอกสารระบบ</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1E293B' }}>{viewingTx.docNumber}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748B' }}>เลขเดิม (อ้างอิง)</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#7C3AED' }}>{viewingTx.manualRefNo || '-'}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748B' }}>ผู้รับเงิน / ร้านค้า</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
+                          {viewingTx.payee || '-'}
+                          {viewingTx.payeePromptpay && (
+                            <span style={{ fontSize: '0.82rem', color: '#2563EB', marginLeft: '6px' }}>(พร้อมเพย์: {viewingTx.payeePromptpay})</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748B' }}>วิธีชำระเงิน</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: viewingTx.paymentMethod === 'PETTY_CASH' ? '#7C3AED' : '#0284C7' }}>
+                          {viewingTx.paymentMethod === 'PETTY_CASH' ? '💵 จ่ายจากวงเงินสดย่อย (Petty Cash)' : '🏦 โอนผ่านบัญชีนิติบุคคล (KBIZ)'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#F1F5F9', borderBottom: '2px solid #CBD5E1' }}>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>ลำดับ</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>รายการ / วัตถุประสงค์</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>หมวดหมู่</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'right', fontSize: '0.85rem', color: '#475569' }}>จำนวนเงิน (บาท)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                          <td style={{ padding: '14px', fontSize: '0.9rem', color: '#64748B' }}>1</td>
+                          <td style={{ padding: '14px', fontSize: '0.95rem', fontWeight: 600, color: '#1E293B' }}>
+                            {viewingTx.title}
+                            {viewingTx.notes && (
+                              <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '4px' }}>
+                                หมายเหตุ: {viewingTx.notes}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: '14px', fontSize: '0.85rem', color: '#64748B' }}>
+                            {viewingTx.category || (viewingTx.subType === 'REPAIR' ? 'ซ่อมแซม' : viewingTx.subType === 'PETTY_CASH' ? 'สดย่อย' : 'ประจำเดือน')}
+                          </td>
+                          <td style={{ padding: '14px', textAlign: 'right', fontSize: '1.05rem', fontWeight: 'bold', color: '#0F172A' }}>
+                            {Number(viewingTx.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ backgroundColor: '#FAFBFD', borderTop: '2px solid #CBD5E1' }}>
+                          <td colSpan={2} style={{ padding: '14px', fontSize: '0.88rem', color: '#475569' }}>
+                            จำนวนเงินตัวอักษร: <strong style={{ color: '#0F172A' }}>({thaiBahtText(Number(viewingTx.amount))})</strong>
+                          </td>
+                          <td style={{ padding: '14px', textAlign: 'right', fontWeight: 'bold', fontSize: '0.95rem', color: '#475569' }}>
+                            รวมทั้งสิ้น:
+                          </td>
+                          <td style={{ padding: '14px', textAlign: 'right', fontSize: '1.25rem', fontWeight: 'bold', color: viewingTx.type === 'EXPENSE' ? '#DC2626' : '#059669' }}>
+                            {Number(viewingTx.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+
+                    {/* Attachments Gallery */}
+                    <div style={{ marginTop: '20px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          📎 หลักฐานประกอบรายการที่แนบไว้ ({[viewingTx.slipUrl, viewingTx.idCardUrl, viewingTx.receiptUrl, ...workPhotos].filter(Boolean).length} รายการ)
+                        </h4>
+                        {viewingTx.driveUrl && (
+                          <a
+                            href={viewingTx.driveUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: '0.82rem', color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            <ExternalLink size={14} /> โฟลเดอร์ Google Drive
+                          </a>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                        {viewingTx.slipUrl && (
+                          <div 
+                            onClick={() => setPreviewImage(viewingTx.slipUrl)}
+                            style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                            title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                          >
+                            <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#ECFDF5' }}>
+                              <img src={formatImageUrl(viewingTx.slipUrl)} alt="สลิปโอนเงิน" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                            </div>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#059669' }}>1. สลิปโอนเงิน 🔍</span>
+                          </div>
+                        )}
+
+                        {viewingTx.idCardUrl && (
+                          <div 
+                            onClick={() => setPreviewImage(viewingTx.idCardUrl)}
+                            style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                            title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                          >
+                            <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#EFF6FF' }}>
+                              <img src={formatImageUrl(viewingTx.idCardUrl)} alt="บัตร ปชช." style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                            </div>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#2563EB' }}>2. บัตร ปชช. / สัญญา 🔍</span>
+                          </div>
+                        )}
+
+                        {viewingTx.receiptUrl && (
+                          <div 
+                            onClick={() => setPreviewImage(viewingTx.receiptUrl)}
+                            style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                            title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                          >
+                            <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#FEF3C7' }}>
+                              <img src={formatImageUrl(viewingTx.receiptUrl)} alt="ใบเสร็จ/สั่งซื้อ" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                            </div>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#D97706' }}>3. สั่งซื้อ / ใบเสร็จ 🔍</span>
+                          </div>
+                        )}
+
+                        {workPhotos.map((p, idx) => (
+                          <div 
+                            key={idx}
+                            onClick={() => setPreviewImage(p)}
+                            style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                            title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                          >
+                            <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#F3E8FF' }}>
+                              <img src={formatImageUrl(p)} alt={`รูปหน้างาน ${idx+1}`} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                            </div>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#7C3AED' }}>4. รูปสินค้า/งาน ({idx+1}) 🔍</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {!viewingTx.slipUrl && !viewingTx.idCardUrl && !viewingTx.receiptUrl && workPhotos.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '16px', color: '#94A3B8', fontSize: '0.85rem', backgroundColor: '#F8FAFC', borderRadius: '8px' }}>
+                          ไม่มีไฟล์หลักฐานแนบไว้ในรายการนี้
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Signatures section for accounting audit */}
+                    <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', paddingTop: '20px', borderTop: '1px dashed #CBD5E1', textAlign: 'center' }}>
+                      <div>
+                        <div style={{ height: '40px' }}></div>
+                        <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
+                          ( ................................................ )<br />
+                          ผู้จัดทำ / ผู้จ่ายเงิน
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ height: '40px' }}></div>
+                        <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
+                          ( ................................................ )<br />
+                          ผู้รับเงิน
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ height: '40px' }}></div>
+                        <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
+                          ( ................................................ )<br />
+                          กรรมการผู้ตรวจจ่าย / อนุมัติ
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Signatures section for accounting audit */}
-              <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', paddingTop: '20px', borderTop: '1px dashed #CBD5E1', textAlign: 'center' }}>
-                <div>
-                  <div style={{ height: '40px' }}></div>
-                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
-                    ( ................................................ )<br />
-                    ผู้จัดทำ / ผู้จ่ายเงิน
-                  </div>
-                </div>
-                <div>
-                  <div style={{ height: '40px' }}></div>
-                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
-                    ( ................................................ )<br />
-                    ผู้รับเงิน
-                  </div>
-                </div>
-                <div>
-                  <div style={{ height: '40px' }}></div>
-                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
-                    ( ................................................ )<br />
-                    กรรมการผู้ตรวจจ่าย / อนุมัติ
-                  </div>
-                </div>
+              {/* Modal Footer */}
+              <div style={{ padding: '12px 20px', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                  {voucherTab === 'VISUAL' ? '💡 แนะนำ: กดปุ่ม "คัดลอกรูป" หรือ "บันทึกรูป" เพื่อนำไปส่งในกลุ่ม LINE ของคณะกรรมการ' : '💡 แนะนำ: กดปุ่ม "พิมพ์ / PDF" เพื่อพิมพ์หรือเซฟเป็นไฟล์ PDF สำหรับแนบรายงานบัญชี'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setViewingTx(null)}
+                  className="btn btn-secondary"
+                  style={{ padding: '8px 24px', fontSize: '0.88rem' }}
+                >
+                  ปิดหน้าต่าง
+                </button>
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div style={{ padding: '12px 24px', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setViewingTx(null)}
-                className="btn btn-secondary"
-                style={{ padding: '8px 24px', fontSize: '0.88rem' }}
-              >
-                ปิดหน้าต่าง
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* --- PREVIEW IMAGE MODAL --- */}
       {previewImage && (
