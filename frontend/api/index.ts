@@ -812,9 +812,42 @@ app.post('/api/cctv/seed', requireAdmin, async (req, res) => {
 // --- Accounting (รายรับ-รายจ่าย & สดย่อย & เงินมัดจำ) ---
 // ==========================================
 
+// Helper to extract highest number from docNumber / manualRefNo (ignoring 4-digit years)
+function extractHighestNumber(...strings: (string | null | undefined)[]): number {
+  let max = 0;
+  for (const s of strings) {
+    if (!s) continue;
+    const matches = s.match(/\d+/g);
+    if (matches) {
+      for (const m of matches) {
+        const val = parseInt(m, 10);
+        // ignore 4-digit years like 2568, 2569, 2570, 2025, 2026, 2027
+        if (val === 2568 || val === 2569 || val === 2570 || val === 2025 || val === 2026 || val === 2027) {
+          continue;
+        }
+        if (val > max && val < 100000) {
+          max = val;
+        }
+      }
+    }
+  }
+  return max;
+}
+
 // Helper to get or init settings
 async function getAccountingSettings() {
-  let settings = await prisma.accountingSetting.findFirst();
+  const allSettings = await prisma.accountingSetting.findMany({ orderBy: { updatedAt: 'desc' } });
+  let settings: any = allSettings[0];
+
+  // Remove duplicate settings if any exist
+  if (allSettings.length > 1) {
+    for (let i = 1; i < allSettings.length; i++) {
+      try {
+        await prisma.accountingSetting.delete({ where: { id: allSettings[i].id } });
+      } catch (e) {}
+    }
+  }
+
   if (!settings) {
     settings = await prisma.accountingSetting.create({
       data: {
@@ -825,6 +858,43 @@ async function getAccountingSettings() {
       }
     });
   }
+
+  // Scan existing transactions to guarantee nextPcNumber and nextPvNumber are strictly higher than all existing items
+  try {
+    const txs = await prisma.accountTransaction.findMany({
+      select: { docNumber: true, manualRefNo: true, subType: true, paymentMethod: true, type: true }
+    });
+
+    let maxPc = 285;
+    let maxPv = 15;
+
+    for (const t of txs) {
+      const isPc = t.subType === 'PETTY_CASH' || t.paymentMethod === 'PETTY_CASH' || (t.docNumber && t.docNumber.startsWith('PC-'));
+      const highestInTx = extractHighestNumber(t.docNumber, t.manualRefNo);
+
+      if (isPc) {
+        if (highestInTx > maxPc) maxPc = highestInTx;
+      } else if (t.type === 'EXPENSE') {
+        if (highestInTx > maxPv) maxPv = highestInTx;
+      }
+    }
+
+    const calculatedNextPc = Math.max(settings.nextPcNumber, maxPc + 1);
+    const calculatedNextPv = Math.max(settings.nextPvNumber, maxPv + 1);
+
+    if (calculatedNextPc !== settings.nextPcNumber || calculatedNextPv !== settings.nextPvNumber) {
+      settings = await prisma.accountingSetting.update({
+        where: { id: settings.id },
+        data: {
+          nextPcNumber: calculatedNextPc,
+          nextPvNumber: calculatedNextPv
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Error auto-syncing next numbers:', err);
+  }
+
   return settings;
 }
 
@@ -959,26 +1029,34 @@ app.post('/api/accounting/transactions', requireAdmin, async (req, res) => {
     const txDate = date ? new Date(date) : new Date();
     const thaiYear = txDate.getFullYear() + 543;
 
-    // Generate docNumber
+    const isPettyCash = paymentMethod === 'PETTY_CASH' || subType === 'PETTY_CASH' || (req.body.docNumber && req.body.docNumber.startsWith('PC-'));
+
+    // Generate docNumber if not provided
     let docNumber = req.body.docNumber;
     if (!docNumber) {
-      if (paymentMethod === 'PETTY_CASH' || subType === 'PETTY_CASH') {
+      if (isPettyCash) {
         const num = settings.nextPcNumber;
         docNumber = `PC-${thaiYear}-${String(num).padStart(4, '0')}`;
-        await prisma.accountingSetting.update({
-          where: { id: settings.id },
-          data: { nextPcNumber: num + 1 }
-        });
       } else if (type === 'EXPENSE') {
         const num = settings.nextPvNumber;
         docNumber = `PV-${thaiYear}-${String(num).padStart(4, '0')}`;
-        await prisma.accountingSetting.update({
-          where: { id: settings.id },
-          data: { nextPvNumber: num + 1 }
-        });
       } else {
         docNumber = `RV-${thaiYear}-${Date.now().toString().slice(-4)}`;
       }
+    }
+
+    // Always increment the next number based on the highest number used
+    const usedNumber = extractHighestNumber(docNumber, manualRefNo);
+    if (isPettyCash) {
+      const nextPc = Math.max(settings.nextPcNumber + 1, (usedNumber > 0 ? usedNumber + 1 : settings.nextPcNumber + 1));
+      await prisma.accountingSetting.updateMany({
+        data: { nextPcNumber: nextPc }
+      });
+    } else if (type === 'EXPENSE') {
+      const nextPv = Math.max(settings.nextPvNumber + 1, (usedNumber > 0 ? usedNumber + 1 : settings.nextPvNumber + 1));
+      await prisma.accountingSetting.updateMany({
+        data: { nextPvNumber: nextPv }
+      });
     }
 
     const tx = await prisma.accountTransaction.create({

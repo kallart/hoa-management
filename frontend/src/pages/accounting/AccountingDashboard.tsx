@@ -4,7 +4,7 @@ import {
   Plus, Search, Edit2, Trash2, Eye, ExternalLink, RefreshCw, 
   Wallet, ShieldAlert, ReceiptText, ArrowUpRight, ArrowDownLeft,
   Calendar, CheckCircle2, Clock, Upload, X, AlertCircle, FileText,
-  Link, Image as ImageIcon
+  Link, Image as ImageIcon, Printer
 } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -38,6 +38,46 @@ export function formatFullImageUrl(url: string): string {
     }
   }
   return url;
+}
+
+// --- Thai Baht Text Converter for Accounting Vouchers ---
+export function thaiBahtText(num: number): string {
+  if (isNaN(num)) return '';
+  const thaiNums = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
+  const units = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
+  
+  const [intPart, decPart] = Number(num).toFixed(2).split('.');
+  
+  function convertGroup(nStr: string) {
+    let res = '';
+    const len = nStr.length;
+    for (let i = 0; i < len; i++) {
+      const digit = parseInt(nStr[i], 10);
+      const pos = len - i - 1;
+      if (digit !== 0) {
+        if (pos === 1 && digit === 1) {
+          res += 'สิบ';
+        } else if (pos === 1 && digit === 2) {
+          res += 'ยี่สิบ';
+        } else if (pos === 0 && digit === 1 && len > 1 && nStr[len - 2] !== '0') {
+          res += 'เอ็ด';
+        } else {
+          res += thaiNums[digit] + units[pos];
+        }
+      }
+    }
+    return res;
+  }
+  
+  const intVal = parseInt(intPart, 10);
+  let result = intVal === 0 ? 'ศูนย์บาท' : convertGroup(intPart) + 'บาท';
+  const decVal = parseInt(decPart, 10);
+  if (decVal === 0) {
+    result += 'ถ้วน';
+  } else {
+    result += convertGroup(decPart) + 'สตางค์';
+  }
+  return result;
 }
 
 export default function AccountingDashboard() {
@@ -77,6 +117,8 @@ export default function AccountingDashboard() {
   const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [viewingTx, setViewingTx] = useState<any | null>(null);
+  const [highlightedTxId, setHighlightedTxId] = useState<string | null>(null);
   const [pettyCashData, setPettyCashData] = useState<any>(null);
 
   // Batch Import Form State (for 6 months old bills)
@@ -223,10 +265,19 @@ export default function AccountingDashboard() {
   };
 
   // Transaction Modal Openers
-  const openNewTxModal = (type: string, subType: string = 'MONTHLY') => {
+  const openNewTxModal = async (type: string, subType: string = 'MONTHLY') => {
     setEditingTxId(null);
+    let freshSettings = settings;
+    try {
+      const res = await api.get('/api/accounting/settings');
+      if (res.data) {
+        freshSettings = res.data;
+        setSettings(res.data);
+      }
+    } catch (e) {}
+
     const thaiYear = currentYear + 543;
-    const nextNum = (subType === 'PETTY_CASH') ? settings?.nextPcNumber || 286 : settings?.nextPvNumber || 16;
+    const nextNum = (subType === 'PETTY_CASH') ? freshSettings?.nextPcNumber || 288 : freshSettings?.nextPvNumber || 16;
     const docNum = (subType === 'PETTY_CASH')
       ? `PC-${thaiYear}-${String(nextNum).padStart(4, '0')}`
       : `PV-${thaiYear}-${String(nextNum).padStart(4, '0')}`;
@@ -249,7 +300,7 @@ export default function AccountingDashboard() {
       idCardUrl: '',
       receiptUrl: '',
       workPhotos: [],
-      driveUrl: settings?.googleDriveUrl || ''
+      driveUrl: freshSettings?.googleDriveUrl || ''
     });
     setIsTxModalOpen(true);
   };
@@ -294,15 +345,23 @@ export default function AccountingDashboard() {
         toast.error('กรุณากรอกรายการและจำนวนเงิน');
         return;
       }
+      let savedData: any = null;
       if (editingTxId) {
-        await api.put(`/api/accounting/transactions/${editingTxId}`, txForm);
+        const res = await api.put(`/api/accounting/transactions/${editingTxId}`, txForm);
+        savedData = res.data;
         toast.success('อัปเดตรายการบัญชีเรียบร้อยแล้ว');
       } else {
-        await api.post('/api/accounting/transactions', txForm);
-        toast.success('บันทึกรายการบัญชีสำเร็จ');
+        const res = await api.post('/api/accounting/transactions', txForm);
+        savedData = res.data;
+        toast.success('บันทึกรายการบัญชีสำเร็จ! ระบบรันเลขที่ถัดไปให้เรียบร้อย');
       }
       setIsTxModalOpen(false);
-      fetchData();
+      await fetchData();
+      if (savedData?.id) {
+        setHighlightedTxId(savedData.id);
+        setViewingTx(savedData); // เปิดแสดงใบสำคัญจ่ายให้ดูทันทีที่บันทึกสำเร็จ
+        setTimeout(() => setHighlightedTxId(null), 5000);
+      }
     } catch (error) {
       toast.error('เกิดข้อผิดพลาดในการบันทึก');
     }
@@ -499,6 +558,26 @@ export default function AccountingDashboard() {
 
   return (
     <div className="page-container" style={{ paddingBottom: '80px' }}>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-voucher, #printable-voucher * {
+            visibility: visible;
+          }
+          #printable-voucher {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            padding: 24px;
+            margin: 0;
+            background: white !important;
+            z-index: 999999;
+          }
+        }
+      `}</style>
       {/* Top Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
         <div>
@@ -817,14 +896,14 @@ export default function AccountingDashboard() {
                 className="btn btn-secondary"
                 style={{ flex: 1, padding: '10px', fontSize: '0.9rem' }}
               >
-                + บันทึกค่าซ่อมแซม (#15)
+                + บันทึกค่าซ่อมแซม (#{settings?.nextPvNumber || 16})
               </button>
               <button 
                 onClick={() => openNewTxModal('EXPENSE', 'PETTY_CASH')}
                 className="btn btn-secondary"
                 style={{ flex: 1, padding: '10px', fontSize: '0.9rem', color: '#7C3AED', borderColor: '#DDD6FE' }}
               >
-                + บันทึกสดย่อย (#285)
+                + บันทึกสดย่อย (#{settings?.nextPcNumber || 288})
               </button>
             </div>
           </div>
@@ -908,22 +987,39 @@ export default function AccountingDashboard() {
                       try { photos = JSON.parse(tx.workPhotos); } catch (e) { photos = [tx.workPhotos]; }
                     }
 
+                    const isHighlighted = tx.id === highlightedTxId;
+
                     return (
-                      <tr key={tx.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                      <tr 
+                        key={tx.id} 
+                        style={{ 
+                          borderBottom: '1px solid #F8FAFC',
+                          backgroundColor: isHighlighted ? '#ECFDF5' : 'transparent',
+                          transition: 'background-color 0.8s ease'
+                        }}
+                      >
                         <td style={{ padding: '14px 16px', fontSize: '0.85rem', color: '#334155' }}>
                           {new Date(tx.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
                         </td>
-                        <td style={{ padding: '14px 16px', fontSize: '0.85rem', fontWeight: 600, color: '#1E293B' }}>
-                          {tx.docNumber}
+                        <td 
+                          style={{ padding: '14px 16px', fontSize: '0.85rem', fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}
+                          onClick={() => setViewingTx(tx)}
+                          title="คลิกเพื่อเปิดดูใบสำคัญจ่าย"
+                        >
+                          <span style={{ color: '#2563EB', textDecoration: 'underline' }}>{tx.docNumber}</span>
                         </td>
                         <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
                           {tx.manualRefNo ? (
-                            <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: '#EDE9FE', color: '#7C3AED', fontWeight: 'bold' }}>
+                            <span 
+                              style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: '#EDE9FE', color: '#7C3AED', fontWeight: 'bold', cursor: 'pointer' }}
+                              onClick={() => setViewingTx(tx)}
+                              title="คลิกเพื่อเปิดดูใบสำคัญจ่าย"
+                            >
                               {tx.manualRefNo}
                             </span>
                           ) : '-'}
                         </td>
-                        <td style={{ padding: '14px 16px' }}>
+                        <td style={{ padding: '14px 16px', cursor: 'pointer' }} onClick={() => setViewingTx(tx)} title="คลิกเพื่อเปิดดูใบสำคัญจ่าย">
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>{tx.title}</span>
                             <span style={{ fontSize: '0.78rem', color: '#64748B' }}>
@@ -996,17 +1092,24 @@ export default function AccountingDashboard() {
                           </div>
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '8px' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                            <button 
+                              onClick={() => setViewingTx(tx)}
+                              style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', fontWeight: 600 }}
+                              title="เปิดดูใบสำคัญจ่าย / รายละเอียดทั้งหมด"
+                            >
+                              <Eye size={14} /> เปิดดู
+                            </button>
                             <button 
                               onClick={() => openEditTxModal(tx)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: '4px' }}
                               title="แก้ไข"
                             >
                               <Edit2 size={16} />
                             </button>
                             <button 
                               onClick={() => handleDeleteTx(tx.id, tx.title)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: '4px' }}
                               title="ลบ"
                             >
                               <Trash2 size={16} />
@@ -1100,7 +1203,7 @@ export default function AccountingDashboard() {
                 className="btn btn-secondary"
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#7C3AED', borderColor: '#DDD6FE' }}
               >
-                <Plus size={16} /> บันทึกจ่ายสดย่อย (#285)
+                <Plus size={16} /> บันทึกจ่ายสดย่อย (#{settings?.nextPcNumber || 288})
               </button>
             </div>
           </div>
@@ -1199,13 +1302,26 @@ export default function AccountingDashboard() {
                       try { photos = JSON.parse(tx.workPhotos); } catch (e) { photos = [tx.workPhotos]; }
                     }
 
+                    const isHighlighted = tx.id === highlightedTxId;
+
                     return (
-                      <tr key={tx.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                      <tr 
+                        key={tx.id} 
+                        style={{ 
+                          borderBottom: '1px solid #F8FAFC',
+                          backgroundColor: isHighlighted ? '#F5F3FF' : 'transparent',
+                          transition: 'background-color 0.8s ease'
+                        }}
+                      >
                         <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{new Date(tx.date).toLocaleDateString('th-TH')}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 'bold', color: '#7C3AED' }}>
-                          {tx.manualRefNo || tx.docNumber}
+                        <td 
+                          style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 'bold', color: '#7C3AED', cursor: 'pointer' }}
+                          onClick={() => setViewingTx(tx)}
+                          title="คลิกเพื่อเปิดดูใบสำคัญจ่ายเงินสดย่อย"
+                        >
+                          <span style={{ textDecoration: 'underline' }}>{tx.manualRefNo || tx.docNumber}</span>
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>
+                        <td style={{ padding: '12px 16px', fontSize: '0.85rem', cursor: 'pointer' }} onClick={() => setViewingTx(tx)} title="คลิกเพื่อเปิดดูใบสำคัญจ่ายเงินสดย่อย">
                           <span style={{ fontWeight: 600, color: '#1F2937' }}>{tx.title}</span>
                           {tx.notes && <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{tx.notes}</div>}
                         </td>
@@ -1230,11 +1346,18 @@ export default function AccountingDashboard() {
                           </div>
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '8px' }}>
-                            <button onClick={() => openEditTxModal(tx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                            <button 
+                              onClick={() => setViewingTx(tx)} 
+                              style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', color: '#6D28D9', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600 }}
+                              title="เปิดดูใบสำคัญจ่ายเงินสดย่อย"
+                            >
+                              <Eye size={13} /> เปิดดู
+                            </button>
+                            <button onClick={() => openEditTxModal(tx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: '3px' }} title="แก้ไข">
                               <Edit2 size={16} />
                             </button>
-                            <button onClick={() => handleDeleteTx(tx.id, tx.title)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}>
+                            <button onClick={() => handleDeleteTx(tx.id, tx.title)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: '3px' }} title="ลบ">
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -1445,7 +1568,19 @@ export default function AccountingDashboard() {
                     onChange={(e) => {
                       const st = e.target.value;
                       const pm = (st === 'PETTY_CASH') ? 'PETTY_CASH' : 'TRANSFER_MAIN';
-                      setTxForm(prev => ({ ...prev, subType: st, paymentMethod: pm }));
+                      const thaiYear = currentYear + 543;
+                      const nextNum = (st === 'PETTY_CASH') ? settings?.nextPcNumber || 288 : settings?.nextPvNumber || 16;
+                      const docNum = (st === 'PETTY_CASH')
+                        ? `PC-${thaiYear}-${String(nextNum).padStart(4, '0')}`
+                        : `PV-${thaiYear}-${String(nextNum).padStart(4, '0')}`;
+                      const defaultRef = `#${nextNum}`;
+                      setTxForm(prev => ({ 
+                        ...prev, 
+                        subType: st, 
+                        paymentMethod: pm,
+                        docNumber: !editingTxId ? docNum : prev.docNumber,
+                        manualRefNo: !editingTxId ? defaultRef : prev.manualRefNo
+                      }));
                     }}
                   >
                     <option value="MONTHLY">ค่าใช้จ่ายประจำเดือน (รปภ./ขยะ/ไฟ)</option>
@@ -2184,6 +2319,321 @@ export default function AccountingDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL: VOUCHER / TRANSACTION DETAIL (ใบสำคัญจ่าย & เปิดดูรายการ) --- */}
+      {viewingTx && (
+        <div 
+          className="modal-overlay" 
+          style={{ display: 'flex', zIndex: 1050, backgroundColor: 'rgba(0,0,0,0.65)' }} 
+          onClick={() => setViewingTx(null)}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ maxWidth: '760px', width: '95%', padding: '0', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+          >
+            {/* Header bar */}
+            <div style={{ backgroundColor: '#1E293B', color: 'white', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileText size={22} color="#38BDF8" />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#F8FAFC' }}>
+                    {viewingTx.subType === 'PETTY_CASH' || viewingTx.paymentMethod === 'PETTY_CASH' || viewingTx.docNumber?.startsWith('PC-')
+                      ? 'ใบสำคัญจ่ายเงินสดย่อย (Petty Cash Voucher)'
+                      : viewingTx.type === 'EXPENSE'
+                      ? 'ใบสำคัญจ่าย (Payment Voucher)'
+                      : 'ใบสำคัญรับ (Receipt Voucher)'}
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
+                    เลขที่: {viewingTx.docNumber} {viewingTx.manualRefNo ? `(เลขเดิม: ${viewingTx.manualRefNo})` : ''}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{
+                    backgroundColor: '#334155',
+                    border: '1px solid #475569',
+                    color: '#F8FAFC',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 500
+                  }}
+                  title="พิมพ์เอกสารใบสำคัญจ่าย"
+                >
+                  <Printer size={15} /> พิมพ์ใบสำคัญ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const tx = viewingTx;
+                    setViewingTx(null);
+                    openEditTxModal(tx);
+                  }}
+                  style={{
+                    backgroundColor: '#4338CA',
+                    border: 'none',
+                    color: 'white',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 500
+                  }}
+                  title="แก้ไขรายการนี้"
+                >
+                  <Edit2 size={15} /> แก้ไข
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewingTx(null)}
+                  style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '1.25rem', padding: '0 6px', lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Voucher Content */}
+            <div id="printable-voucher" style={{ padding: '24px', backgroundColor: '#FFFFFF', overflowY: 'auto', flex: 1 }}>
+              {/* Organization Header */}
+              <div style={{ borderBottom: '2px solid #E2E8F0', paddingBottom: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', color: '#0F172A', fontWeight: 'bold' }}>
+                    นิติบุคคลหมู่บ้านจัดสรร รอยัล ราชาวดี
+                  </h2>
+                  <div style={{ fontSize: '0.85rem', color: '#64748B' }}>
+                    ซอยพุทธบูชา 39 แขวงบางมด เขตทุ่งครุ กรุงเทพมหานคร 10140
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ 
+                    display: 'inline-block',
+                    padding: '4px 12px', 
+                    borderRadius: '20px', 
+                    fontSize: '0.85rem', 
+                    fontWeight: 'bold',
+                    backgroundColor: viewingTx.type === 'EXPENSE' ? '#FEF2F2' : '#ECFDF5',
+                    color: viewingTx.type === 'EXPENSE' ? '#DC2626' : '#059669',
+                    border: `1px solid ${viewingTx.type === 'EXPENSE' ? '#FECACA' : '#A7F3D0'}`
+                  }}>
+                    {viewingTx.type === 'EXPENSE' ? '● จ่ายเงินเรียบร้อย' : '● บันทึกรับเรียบร้อย'}
+                  </span>
+                  <div style={{ marginTop: '6px', fontSize: '0.85rem', color: '#475569' }}>
+                    วันที่: <strong>{new Date(viewingTx.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Voucher Meta Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>เลขที่เอกสารระบบ</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1E293B' }}>{viewingTx.docNumber}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>เลขเดิม (อ้างอิง)</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#7C3AED' }}>{viewingTx.manualRefNo || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>ผู้รับเงิน / ร้านค้า</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A' }}>
+                    {viewingTx.payee || '-'}
+                    {viewingTx.payeePromptpay && (
+                      <span style={{ fontSize: '0.82rem', color: '#2563EB', marginLeft: '6px' }}>(พร้อมเพย์: {viewingTx.payeePromptpay})</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748B' }}>วิธีชำระเงิน</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: viewingTx.paymentMethod === 'PETTY_CASH' ? '#7C3AED' : '#0284C7' }}>
+                    {viewingTx.paymentMethod === 'PETTY_CASH' ? '💵 จ่ายจากวงเงินสดย่อย (Petty Cash)' : '🏦 โอนผ่านบัญชีนิติบุคคล (KBIZ)'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#F1F5F9', borderBottom: '2px solid #CBD5E1' }}>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>ลำดับ</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>รายการ / วัตถุประสงค์</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>หมวดหมู่</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'right', fontSize: '0.85rem', color: '#475569' }}>จำนวนเงิน (บาท)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                    <td style={{ padding: '14px', fontSize: '0.9rem', color: '#64748B' }}>1</td>
+                    <td style={{ padding: '14px', fontSize: '0.95rem', fontWeight: 600, color: '#1E293B' }}>
+                      {viewingTx.title}
+                      {viewingTx.notes && (
+                        <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '4px' }}>
+                          หมายเหตุ: {viewingTx.notes}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '14px', fontSize: '0.85rem', color: '#64748B' }}>
+                      {viewingTx.category || (viewingTx.subType === 'REPAIR' ? 'ซ่อมแซม' : viewingTx.subType === 'PETTY_CASH' ? 'สดย่อย' : 'ประจำเดือน')}
+                    </td>
+                    <td style={{ padding: '14px', textAlign: 'right', fontSize: '1.05rem', fontWeight: 'bold', color: '#0F172A' }}>
+                      {Number(viewingTx.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr style={{ backgroundColor: '#FAFBFD', borderTop: '2px solid #CBD5E1' }}>
+                    <td colSpan={2} style={{ padding: '14px', fontSize: '0.88rem', color: '#475569' }}>
+                      จำนวนเงินตัวอักษร: <strong style={{ color: '#0F172A' }}>({thaiBahtText(Number(viewingTx.amount))})</strong>
+                    </td>
+                    <td style={{ padding: '14px', textAlign: 'right', fontWeight: 'bold', fontSize: '0.95rem', color: '#475569' }}>
+                      รวมทั้งสิ้น:
+                    </td>
+                    <td style={{ padding: '14px', textAlign: 'right', fontSize: '1.25rem', fontWeight: 'bold', color: viewingTx.type === 'EXPENSE' ? '#DC2626' : '#059669' }}>
+                      {Number(viewingTx.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              {/* Attachments Section */}
+              <div style={{ marginTop: '20px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📎 หลักฐานประกอบรายการที่แนบไว้ ({[viewingTx.slipUrl, viewingTx.idCardUrl, viewingTx.receiptUrl, ...(viewingTx.workPhotos ? (typeof viewingTx.workPhotos === 'string' ? JSON.parse(viewingTx.workPhotos || '[]') : viewingTx.workPhotos) : [])].filter(Boolean).length} รายการ)
+                  </h4>
+                  {viewingTx.driveUrl && (
+                    <a
+                      href={viewingTx.driveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: '0.82rem', color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <ExternalLink size={14} /> โฟลเดอร์ Google Drive
+                    </a>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                  {viewingTx.slipUrl && (
+                    <div 
+                      onClick={() => setPreviewImage(viewingTx.slipUrl)}
+                      style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                      title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                    >
+                      <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#ECFDF5' }}>
+                        <img src={formatImageUrl(viewingTx.slipUrl)} alt="สลิปโอนเงิน" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                      </div>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#059669' }}>1. สลิปโอนเงิน 🔍</span>
+                    </div>
+                  )}
+
+                  {viewingTx.idCardUrl && (
+                    <div 
+                      onClick={() => setPreviewImage(viewingTx.idCardUrl)}
+                      style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                      title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                    >
+                      <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#EFF6FF' }}>
+                        <img src={formatImageUrl(viewingTx.idCardUrl)} alt="บัตร ปชช." style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                      </div>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#2563EB' }}>2. บัตร ปชช. / สัญญา 🔍</span>
+                    </div>
+                  )}
+
+                  {viewingTx.receiptUrl && (
+                    <div 
+                      onClick={() => setPreviewImage(viewingTx.receiptUrl)}
+                      style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                      title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                    >
+                      <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#FEF3C7' }}>
+                        <img src={formatImageUrl(viewingTx.receiptUrl)} alt="ใบเสร็จ/สั่งซื้อ" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                      </div>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#D97706' }}>3. สั่งซื้อ / ใบเสร็จ 🔍</span>
+                    </div>
+                  )}
+
+                  {/* Work photos */}
+                  {(() => {
+                    let photos: string[] = [];
+                    if (viewingTx.workPhotos) {
+                      try { photos = typeof viewingTx.workPhotos === 'string' ? JSON.parse(viewingTx.workPhotos) : viewingTx.workPhotos; } catch (e) { photos = [viewingTx.workPhotos]; }
+                    }
+                    return photos.map((p, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => setPreviewImage(p)}
+                        style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#F8FAFC' }}
+                        title="คลิกเพื่อขยายดูรูปขนาดเต็ม"
+                      >
+                        <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '6px', marginBottom: '6px', backgroundColor: '#F3E8FF' }}>
+                          <img src={formatImageUrl(p)} alt={`รูปหน้างาน ${idx+1}`} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+                        </div>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#7C3AED' }}>4. รูปสินค้า/งาน ({idx+1}) 🔍</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+
+                {!viewingTx.slipUrl && !viewingTx.idCardUrl && !viewingTx.receiptUrl && (!viewingTx.workPhotos || viewingTx.workPhotos.length === 0) && (
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#94A3B8', fontSize: '0.85rem', backgroundColor: '#F8FAFC', borderRadius: '8px' }}>
+                    ไม่มีไฟล์หลักฐานแนบไว้ในรายการนี้
+                  </div>
+                )}
+              </div>
+
+              {/* Signatures section for accounting audit */}
+              <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', paddingTop: '20px', borderTop: '1px dashed #CBD5E1', textAlign: 'center' }}>
+                <div>
+                  <div style={{ height: '40px' }}></div>
+                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
+                    ( ................................................ )<br />
+                    ผู้จัดทำ / ผู้จ่ายเงิน
+                  </div>
+                </div>
+                <div>
+                  <div style={{ height: '40px' }}></div>
+                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
+                    ( ................................................ )<br />
+                    ผู้รับเงิน
+                  </div>
+                </div>
+                <div>
+                  <div style={{ height: '40px' }}></div>
+                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '0.82rem', color: '#475569' }}>
+                    ( ................................................ )<br />
+                    กรรมการผู้ตรวจจ่าย / อนุมัติ
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '12px 24px', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setViewingTx(null)}
+                className="btn btn-secondary"
+                style={{ padding: '8px 24px', fontSize: '0.88rem' }}
+              >
+                ปิดหน้าต่าง
+              </button>
             </div>
           </div>
         </div>
